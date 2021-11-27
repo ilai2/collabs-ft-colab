@@ -102,5 +102,5 @@ for letter in LETTERS_TO_PAGES:
                 download_song(link, genres[:-1], file_name)
             elif artist == "Christmas":
                 download_song(link, ["christmas"], file_name)
-            elif artist == "National Anthems":
+            elif artist == "National_Anthems":
                 download_song(link, ["national-anthems"], file_name)
