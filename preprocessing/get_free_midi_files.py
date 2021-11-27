@@ -65,6 +65,8 @@ def download_song(url, folders, file_name):
 
     except requests.exceptions.TooManyRedirects as err:
         print("oops, too many redirects for " + url)
+    except requests.exceptions.ConnectionError as err:
+        print(err)
 
 
 # go through all songs by beginning letter of song title
