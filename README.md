@@ -13,5 +13,4 @@ More information about each dataset is contained in their own READMEs.
 ### From freemidi.org
    - [data](https://drive.google.com/file/d/1fuUhV-HXMc66fCIM7kN6Z26XqBCfVYr5/view?usp=sharing) (unzipped size: 1.71 GB)
    - 38,878 MIDI files
-   - [collection script](data_collection/get_midiworld_files.py)
-   
+   - [collection script](data_collection/get_freemidi_files.py)
