@@ -1,14 +1,17 @@
-"""Downloads midi files from midiworld by genre and saves them"""
+"""Downloads midi files from midiworld given a genre and saves them
+You must manually create a folder named whatever your GENRE is before running"""
+
 from bs4 import BeautifulSoup
 import requests
 
-# ============================= website/genre info =============================
-MIDI_BASE_URL = "https://www.midiworld.com/search/"
-# number of pages in this genre
-NUM_PAGES = 83
-GENRE = "rock"
-GENRE_URL = "/?q=" + GENRE
+# CHANGE THESE
+# number of pages midiworld has in this genre
+NUM_PAGES = 2
+GENRE = "jazz"
 
+# ================================ website info ================================
+MIDI_BASE_URL = "https://www.midiworld.com/search/"
+GENRE_URL = "/?q=" + GENRE
 # titles all had - download in them
 SPLIT_TEXT = " - download"
 
@@ -16,6 +19,7 @@ SPLIT_TEXT = " - download"
 DIRECTORY = "data/" + GENRE + "/"
 FILE_EXTENSION = ".mid"
 
+# ==================================== code ====================================
 for n in range(1, NUM_PAGES + 1):
     print(n)
     r = requests.get(MIDI_BASE_URL + str(n) + GENRE_URL)
