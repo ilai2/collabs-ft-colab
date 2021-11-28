@@ -63,9 +63,10 @@ def process_part(notes_to_parse):
     param: a music21 stream, called notes_to_parse
     returns: a tuple of two lists
         notes: a list of the notes (represented as integers) in the stream. At index i, there is an encoding
-        of the note at offset i/12. 0 represents a lack of note
+        of the note at offset i/12. 0 represents a lack of note at an offset
         durations: a parallel list of durations, each duration is either a Fraction or float
         and represents the duration of the note in the same index
+        volumes: a 
     """
 
     size = int(round(float(notes_to_parse[-1].offset) * 12)) + 1
@@ -86,14 +87,14 @@ def process_part(notes_to_parse):
 def process_midi(filepath):
     """ 
     param: a filepath to a .mid file
-    returns: a list of 3-tuples
+    returns: a list of 4-tuples
         each element represents the part of one instrument
-        the 3 elements of the tuple are:
+        the 4 elements of the tuple are:
             the instrument of the part (as an int)
             the notes of the part (as a list of ints)
-            the duration of the part (as a list of Fractions and floats)
+            the duration of the notes (as a list of floats)
+            the volumes of the notes (as a list of integers)
     """
-    #TODO: make the 
     midi = converter.parse(filepath)
     notes_to_parse = None
     parts = instrument.partitionByInstrument(midi)
@@ -114,6 +115,16 @@ def process_midi(filepath):
         return [(instrument_encoding, notes, durations, volumes)]
 
 def deprocess_midi(encoding):
+    """
+    param : a list of 4-tuples
+        each element represents the part of one instrument
+        the 4 elements of the tuple are:
+            the instrument of the part (as an int)
+            the notes of the part (as a list of ints)
+            the duration of the notes (as a list of floats)
+            the volumes of the notes (as a list of integers)
+    returns : a midi stream of the encoding
+    """
     midi_score = stream.Score()
     for part in encoding:
         p = stream.Part()
@@ -154,8 +165,8 @@ def deprocess_midi(encoding):
     return midi_score
 
 def main():
-    midi = process_midi("midis/red.mid")
+    midi = process_midi("midis/7_Words_Deftones.mid")
     midi_stream = deprocess_midi(midi)
-    midi_stream.write('midi', fp='test_output.mid')
+    midi_stream.write('midi', fp='Deftones_Remix    .mid')
 if __name__ == '__main__':
 	main()
