@@ -281,14 +281,17 @@ def deprocess_midi(notes, durations, volumes):
     return midi_score
 
 def main():
+    # Change this to whatever your folder is!
     folder_name = "data_collection/freemidi_data/freemidi_data/alternative-indie/"
     
+    # Change this to whatever the index of the last file you ran it on was!
     start_file = 0
+
     count = 0
 
     global element_to_int_dict
     try: 
-        element_to_int_dict = read_element_dict(folder_name + "dict.txt")
+        (_,element_to_int_dict) = read_element_dict(folder_name + "dict.txt")
     except:
         element_to_int_dict = {}
     
@@ -298,8 +301,8 @@ def main():
                 (notes, durations, volumes) = process_midi(file)
                 write_song(folder_name + "songs.txt", notes, durations, volumes)
             except:
-                pass 
-            if count > 500:
+                pass
+            if count >= 500:
                 print(count)
                 break
         count = count + 1
