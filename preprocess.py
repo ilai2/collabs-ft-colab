@@ -1,11 +1,10 @@
-
 import tensorflow as tf
 import numpy as np
 from music21 import *
 from fractions import Fraction
-
+import glob
 # Hyperparameters
-SEQUENCE_LENGTH = 10
+INSTRUMENT_NUM = 18
 
 # Global Variables
 
@@ -15,37 +14,92 @@ SEQUENCE_LENGTH = 10
 # rests are "r"
 # padding is "p"
 element_to_int_dict = {"p": 0}
-# instrument to instrument name dictionary
-instrument_to_int_dict = {}
+# instrument_class to integer dictionary
+instrument_to_int_dict = {
+    type(instrument.Instrument()): 0,
+    type(instrument.WoodwindInstrument()): 1,
+    type(instrument.BrassInstrument()): 2,
+    type(instrument.ElectricOrgan()): 3,
+    type(instrument.Choir()): 4,
+    type(instrument.FretlessBass()): 5,
+    type(instrument.ElectricPiano()): 6,
+    type(instrument.Vocalist()): 7,
+    type(instrument.Bass()): 8,
+    type(instrument.ElectricBass()): 9,
+    type(instrument.ElectricGuitar()): 10,
+    type(instrument.Sampler()): 11,
+    type(instrument.StringInstrument()): 12,
+    type(instrument.Piano()): 13,
+    type(instrument.UnpitchedPercussion()): 14,
+    type(instrument.AcousticGuitar()): 15,
+    type(instrument.AltoSaxophone()): 16,
+    type(instrument.KeyboardInstrument()): 17
+}
 # the same as element_to_int_dict but with keys and values swapped
 int_to_element_dict = {0: "p"}
-# the same as instrument_to_int_dict but with keys and values swapped
-int_to_instrument_dict = {}
 
-def process_instrument(instrument):
+# the same as instrument_to_int_dict but with keys and values swapped
+int_to_instrument_dict = {
+    0: instrument.Instrument(),
+    1: instrument.Flute(),
+    2: instrument.Trumpet(),
+    3: instrument.ElectricOrgan(),
+    4: instrument.Choir(),
+    5: instrument.FretlessBass(),
+    6: instrument.ElectricPiano(),
+    7: instrument.Vocalist(),
+    8: instrument.Bass(),
+    9: instrument.ElectricBass(),
+    10: instrument.ElectricGuitar(),
+    11: instrument.Sampler(),
+    12: instrument.Guitar(),
+    13: instrument.Piano(),
+    14: instrument.UnpitchedPercussion(),
+    15: instrument.AcousticGuitar(),
+    16: instrument.AltoSaxophone(),
+    17: instrument.Piano()
+}
+
+def process_instrument(instr):
     """ 
     param: an instrument
     returns: the integer associated with that instrument in instrument_to_int_dict
-    if the instrument does not exist in the dictionary, it adds it first
+    if the instrument does not exist in the dictionary, it returns None
     """
-    if instrument in instrument_to_int_dict:
-        instrument_encoding = instrument_to_int_dict[instrument]
-    else:
-        instrument_to_int_dict[instrument] = len(instrument_to_int_dict)
-        int_to_instrument_dict[len(instrument_to_int_dict)] = instrument
-        instrument_encoding = len(instrument_to_int_dict)
-    return instrument_encoding
-
-def process_element(element):
+    instrumentType = type(instr)
+    try:
+        return instrument_to_int_dict[instrumentType]
+    except:
+        if issubclass(instrumentType, type(instrument.StringInstrument())):
+            return instrument_to_int_dict[type(instrument.StringInstrument())]
+        elif issubclass(instrumentType, type(instrument.KeyboardInstrument())):
+            return instrument_to_int_dict[type(instrument.KeyboardInstrument())]
+        elif issubclass(instrumentType, type(instrument.WoodwindInstrument())):
+            return instrument_to_int_dict[type(instrument.WoodwindInstrument())]
+        elif issubclass(instrumentType, type(instrument.BrassInstrument())):
+            return instrument_to_int_dict[type(instrument.BrassInstrument())]
+        elif issubclass(instrumentType, type(instrument.Vocalist())):
+            return instrument_to_int_dict[type(instrument.Vocalist())]
+        else:
+            return None
+def process_element(element, old_element):
     """ 
-    param: a note, chord or rest
+    param: a note, chord or rest, and an element that occurs at the same time
     returns: the integer associated with that element in element_to_int_dict
     if the element does not exist in the dictionary, it adds it first
     """
-    if isinstance(element, note.Note):
-        element_string = "n:" + str(element.pitch)
+    old_string = int_to_element_dict[old_element]
+    if old_string[0] == 'n' or old_string[0] == 'c':
+        start = "c:" + old_string[2:] + "."
     elif isinstance(element, chord.Chord):
-        element_string = "c:" + '.'.join(str(n) for n in element.pitches)
+        start = "c:"
+    elif isinstance(element, note.Note):
+        start = "n:"
+    
+    if isinstance(element, note.Note):
+        element_string = start + str(element.pitch)
+    elif isinstance(element, chord.Chord):
+        element_string = start + '.'.join(str(n) for n in element.pitches)
     elif isinstance(element, note.Rest):
         element_string = "r"
     
@@ -58,115 +112,178 @@ def process_element(element):
         int_to_element_dict[encoding] = element_string
     return encoding
 
-def process_part(notes_to_parse):
+def process_part(notes_to_parse, instrument_encoding, notes, durations, volumes):
     """ 
-    param: a music21 stream, called notes_to_parse
-    returns: a tuple of two lists
-        notes: a list of the notes (represented as integers) in the stream. At index i, there is an encoding
-        of the note at offset i/12. 0 represents a lack of note at an offset
-        durations: a parallel list of durations, each duration is either a Fraction or float
+    param: a music21 stream, called notes_to_parse, the instrument that the part is for, and 3 instrument_amount * time matrices 
+    returns: a tuple of 3 lists
+        notes: a matrix of the notes (represented as integers) in the stream. At index (i,j), there is an encoding
+        of the note of the ith instrument at the offset j/12. 0 represents a lack of note at an offset
+        durations: a parallel matrix of durations, each duration is either a Fraction or float
         and represents the duration of the note in the same index
-        volumes: a 
+        volumes: a parallel matrix of volumes, each volume is an integer
+        and represents the volume of the note in the same index
     """
-
-    size = int(round(float(notes_to_parse[-1].offset) * 12)) + 1
-    notes = [0] * size
-    durations = [0] * size
-    volumes = [0] * size
     for element in notes_to_parse:
         if (isinstance(element, note.Note)
         or isinstance(element, chord.Chord) 
         or isinstance(element, note.Rest)):
             index =  int(round(float(element.offset) * 12))
-            notes[index] = process_element(element)
-            durations[index] = float(element.duration.quarterLength)
+            notes[instrument_encoding][index] = process_element(element, notes[instrument_encoding][index])
+            durations[instrument_encoding][index] = int(element.duration.quarterLength*12)
             if not (isinstance(element, note.Rest)):
-                volumes[index] = element.volume.velocity
+                volumes[instrument_encoding][index] = element.volume.velocity
     return (notes, durations, volumes)
+
+def offset_length(part):
+    """Finds the largest offset of a element in a part"""
+    try:
+        return part[-1].offset
+    except: 
+        return 0
 
 def process_midi(filepath):
     """ 
     param: a filepath to a .mid file
-    returns: a list of 4-tuples
-        each element represents the part of one instrument
-        the 4 elements of the tuple are:
-            the instrument of the part (as an int)
-            the notes of the part (as a list of ints)
-            the duration of the notes (as a list of floats)
-            the volumes of the notes (as a list of integers)
+    returns: a tuple of 3 matrices
+        the 3 elements of the tuple are:
+            the notes matrix
+            the durations matrix
+            the volumes matrix
     """
     midi = converter.parse(filepath)
     notes_to_parse = None
     parts = instrument.partitionByInstrument(midi)
     if parts: # file has instrument parts
-        score = []
-        index = 0
+        maximum_offset = max([offset_length(part) for part in parts])
+        size = int(round(float(maximum_offset) * 12)) + 1
+        notes = np.zeros((INSTRUMENT_NUM, size))
+        durations = np.zeros((INSTRUMENT_NUM, size))
+        volumes = np.zeros((INSTRUMENT_NUM, size))
         for part in parts:
             instrument_encoding = process_instrument(part.getInstrument())
-            notes_to_parse = part.recurse()
-            (notes, durations, volumes) = process_part(notes_to_parse)
-            score.append((instrument_encoding, notes, durations, volumes))
-            index = index + 1
-        return score
+            if instrument_encoding != None:
+                notes_to_parse = part.recurse()
+                notes, durations, volumes = process_part(notes_to_parse, instrument_encoding, notes, durations, volumes)
+        return (notes, durations, volumes)
     else: # file has notes in a flat structure
         notes_to_parse = midi.flat.notesAndRests
-        instrument_encoding = process_instrument(parts.getInstrument())
-        (notes, durations, volumes) = process_part(notes_to_parse)
-        return [(instrument_encoding, notes, durations, volumes)]
+        maximum_offset = max(notes_to_parse)
+        size = int(round(float(maximum_offset) * 12)) + 1
+        notes = np.zeros((INSTRUMENT_NUM, size))
+        durations = np.zeros((INSTRUMENT_NUM, size))
+        volumes = np.zeros((INSTRUMENT_NUM, size))
+        return process_part(notes_to_parse, 0, notes, durations, volumes)
 
-def deprocess_midi(encoding):
+def write_element_dict(filepath):
+    with open(filepath, "w+") as f:
+        f.write(str(len(element_to_int_dict)) + "\n")
+        for key in element_to_int_dict.keys():
+            f.write(str(element_to_int_dict[key]) + " " + key + "\n")
+    pass
+
+def write_song(filepath, notes, durations, volumes):
+    (xArray, yArray) = np.nonzero(notes)
+    with open(filepath, "a+") as f:
+        f.write(str(len(notes[0])))
+        for i in range(len(xArray)):
+            x = xArray[i]
+            y = yArray[i]
+            f.write(";")
+            f.write(str(x))
+            f.write(",")
+            f.write(str(y))
+            f.write(",")
+            f.write(str(notes[x][y]))
+            f.write(",")
+            f.write(str(durations[x][y]))
+            f.write(",")
+            f.write(str(volumes[x][y]))
+        f.write("\n")
+    pass
+
+def read_element_dict(filepath):
+    with open(filepath, "r+") as f:
+        dict = {}
+        size = int(f.readline())
+        line = f.readline()
+        while line:
+            split = line.split()
+            dict[int(split[0])] = split[1]
+            line = f.readline()
+    return (size, dict)
+
+def read_song(filepath,lineno):
+    with open(filepath, "r+") as f:
+        for (i, line) in enumerate(f):
+            if i == lineno:
+                line = line.split(";")
+                notes = np.zeros((INSTRUMENT_NUM, int(line[0])))
+                durations = np.zeros((INSTRUMENT_NUM, int(line[0])))
+                volumes = np.zeros((INSTRUMENT_NUM, int(line[0])))
+                for tuple in line[1:]:
+                    split = tuple.split(",")
+                    x = int(split[0])
+                    y = int(split[1])
+                    notes[x][y] = int(float(split[2]))
+                    durations[x][y] = int(float(split[3]))
+                    volumes[x][y] = int(float(split[4]))
+                break
+    return (notes, durations, volumes)
+
+
+
+def deprocess_midi(notes, durations, volumes):
     """
-    param : a list of 4-tuples
-        each element represents the part of one instrument
-        the 4 elements of the tuple are:
-            the instrument of the part (as an int)
-            the notes of the part (as a list of ints)
-            the duration of the notes (as a list of floats)
-            the volumes of the notes (as a list of integers)
+    param :
+            the notes matrix
+            the durations matrix
+            the volumes matrix
     returns : a midi stream of the encoding
     """
     midi_score = stream.Score()
-    for part in encoding:
+    for i in range(len(notes)):
         p = stream.Part()
-        p.insert(0, int_to_instrument_dict[part[0]])
+        p.insert(0, int_to_instrument_dict[i])
         p.insert(0, tempo.MetronomeMark(number = 120))
         p.insert(0, meter.TimeSignature('4/4'))
         offset = 0
-        for i in range(len(part[1])):
-            element_encoding = part[1][i]
+        for j in range(len(notes[i])):
+            element_encoding = notes[i][j]
             element_string = int_to_element_dict[element_encoding]
             if (element_string[0] == 'n'):
                 new_note = note.Note(element_string[2:])
                 new_duration = duration.Duration()
-                new_duration.quarterLength = part[2][i]
+                new_duration.quarterLength = Fraction(int(durations[i][j]), 12)
                 new_note.duration = new_duration
-                new_note.volume = part[3][i]
+                new_note.volume = volumes[i][j]
                 p.insert(Fraction(offset, 12), new_note)
             elif (element_string[0] == 'r'):
                 new_rest = note.Rest()
                 new_duration = duration.Duration()
-                new_duration.quarterLength = part[2][i]
+                new_duration.quarterLength = Fraction(int(durations[i][j]), 12)
                 new_rest.duration = new_duration
                 p.insert(Fraction(offset, 12), new_rest)
             elif (element_string[0] == 'c'):
                 notes_in_chord = element_string[2:].split('.')
-                notes = []
+                chordNotes = []
                 for current_note in notes_in_chord:
                     new_note = note.Note(current_note)
-                    notes.append(new_note)
-                new_chord = chord.Chord(notes)
+                    chordNotes.append(new_note)
+                new_chord = chord.Chord(chordNotes)
                 new_duration = duration.Duration()
-                new_duration.quarterLength = part[2][i]
+                new_duration.quarterLength = Fraction(int(durations[i][j]), 12)
                 new_chord.duration = new_duration
-                new_chord.volume = part[3][i]
+                new_chord.volume = volumes[i][j]
                 p.insert(Fraction(offset, 12), new_chord)
             offset = offset + 1
         midi_score.insert(0, p)
     return midi_score
 
 def main():
-    midi = process_midi("midis/7_Words_Deftones.mid")
-    midi_stream = deprocess_midi(midi)
-    midi_stream.write('midi', fp='Deftones_Remix    .mid')
+    for file in glob.glob("midi_songs/*.mid"):
+        (notes, durations, volumes) = process_midi(file)
+        write_element_dict("asdf.txt")
+        write_song("fdsa.txt", notes, durations, volumes)
+  
 if __name__ == '__main__':
 	main()
