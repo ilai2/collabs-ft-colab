@@ -10,11 +10,8 @@ INSTRUMENT_NUM = 18
 # Global Variables
 
 # element name to int dictionary
-# notes are represented as strings in the form "n: <pitch>"
-# chords are represented in the form "c: <pitch_1>.<pitch_2>. etc."
-# rests are "r"
-# padding is "p"
-element_to_int_dict = {"p": 0}
+# elements are represented as a set of pitches (integers), keys are actually strings b/c no mutable objects as keys
+element_to_int_dict = {"set()" : 0}
 # instrument_class to integer dictionary
 instrument_to_int_dict = {
     type(instrument.Instrument()): 0,
@@ -37,7 +34,7 @@ instrument_to_int_dict = {
     type(instrument.KeyboardInstrument()): 17
 }
 # the same as element_to_int_dict but with keys and values swapped
-int_to_element_dict = {0: "p"}
+int_to_element_dict = {0: set()}
 
 # the same as instrument_to_int_dict but with keys and values swapped
 int_to_instrument_dict = {
@@ -83,34 +80,28 @@ def process_instrument(instr):
             return instrument_to_int_dict[type(instrument.Vocalist())]
         else:
             return None
+
 def process_element(element, old_element):
     """ 
     param: a note, chord or rest, and an element that occurs at the same time
     returns: the integer associated with that element in element_to_int_dict
     if the element does not exist in the dictionary, it adds it first
     """
-    old_string = int_to_element_dict[old_element]
-    if old_string[0] == 'n' or old_string[0] == 'c':
-        start = "c:" + old_string[2:] + "."
-    elif isinstance(element, chord.Chord):
-        start = "c:"
-    elif isinstance(element, note.Note):
-        start = "n:"
-    
+    old_set = int_to_element_dict[old_element]
     if isinstance(element, note.Note):
-        element_string = start + str(element.pitch)
+        element_set = {element.pitch.midi}
     elif isinstance(element, chord.Chord):
-        element_string = start + '.'.join(str(n) for n in element.pitches)
-    elif isinstance(element, note.Rest):
-        element_string = "r"
-    
-    if element_string in element_to_int_dict:
-        encoding = element_to_int_dict[element_string]
+        element_set = {p.midi for p in element.pitches}
     else:
-        encoding = len(element_to_int_dict)
+         element_set = set()
+    element_set.union(old_set)
+    if str(element_set) in element_to_int_dict:
+         encoding = element_to_int_dict[str(element_set)]
+    else:
+         encoding = len(element_to_int_dict)
 
-        element_to_int_dict[element_string] = encoding
-        int_to_element_dict[encoding] = element_string
+         element_to_int_dict[str(element_set)] = encoding
+         int_to_element_dict[encoding] = element_set
     return encoding
 
 def process_part(notes_to_parse, instrument_encoding, notes, durations, volumes):
@@ -179,7 +170,7 @@ def write_element_dict(filepath):
     with open(filepath, "w+") as f:
         f.write(str(len(element_to_int_dict)) + "\n")
         for key in element_to_int_dict.keys():
-            f.write(str(element_to_int_dict[key]) + " " + key + "\n")
+            f.write(str(element_to_int_dict[key]) + " " + str(key) + "\n")
     pass
 
 def write_song(filepath, notes, durations, volumes):
@@ -204,12 +195,32 @@ def write_song(filepath, notes, durations, volumes):
 
 def read_element_dict(filepath):
     with open(filepath, "r+") as f:
-        dict = {}
+        dict = {"set()": 0}
         size = int(f.readline())
+        f.readline()
         line = f.readline()
         while line:
-            split = line.split()
-            dict[int(split[1])] = split[0]
+            split = line.split("{")
+            dict["{" + split[1]] = int(split[0].strip())
+            line = f.readline()
+    return (size, dict)
+
+def stringToSet(setString):
+    setString = setString[1:-1]
+    newSet = set()
+    for x in setString.split(","):
+       newSet.add(int(x.strip()))
+    return newSet
+
+def read_int_dict(filepath):
+    with open(filepath, "r+") as f:
+        dict = {0: set()}
+        size = int(f.readline())
+        f.readline()
+        line = f.readline()
+        while line:
+            split = line.split("{")
+            dict[int(split[0].strip())] = stringToSet("{" + split[1][:-1])
             line = f.readline()
     return (size, dict)
 
@@ -250,25 +261,18 @@ def deprocess_midi(notes, durations, volumes):
         offset = 0
         for j in range(len(notes[i])):
             element_encoding = notes[i][j]
-            element_string = int_to_element_dict[element_encoding]
-            if (element_string[0] == 'n'):
-                new_note = note.Note(element_string[2:])
+            element_set = int_to_element_dict[element_encoding]
+            if (len(element_set) == 1):
+                new_note = note.Note(midi = list(element_set)[0])
                 new_duration = duration.Duration()
                 new_duration.quarterLength = Fraction(int(durations[i][j]), 12)
                 new_note.duration = new_duration
                 new_note.volume = volumes[i][j]
                 p.insert(Fraction(offset, 12), new_note)
-            elif (element_string[0] == 'r'):
-                new_rest = note.Rest()
-                new_duration = duration.Duration()
-                new_duration.quarterLength = Fraction(int(durations[i][j]), 12)
-                new_rest.duration = new_duration
-                p.insert(Fraction(offset, 12), new_rest)
-            elif (element_string[0] == 'c'):
-                notes_in_chord = element_string[2:].split('.')
+            elif (len(element_set) > 1):
                 chordNotes = []
-                for current_note in notes_in_chord:
-                    new_note = note.Note(current_note)
+                for current_note in element_set:
+                    new_note = note.Note(midi = current_note)
                     chordNotes.append(new_note)
                 new_chord = chord.Chord(chordNotes)
                 new_duration = duration.Duration()
@@ -279,6 +283,7 @@ def deprocess_midi(notes, durations, volumes):
             offset = offset + 1
         midi_score.insert(0, p)
     return midi_score
+
 
 def main():
     # Change this to whatever your folder is!
@@ -294,7 +299,7 @@ def main():
     try: 
         (_,element_to_int_dict) = read_element_dict("dict.txt")
     except:
-        element_to_int_dict = {0: "p"}
+        element_to_int_dict = {"set()": 0}
     
     for file in glob.glob(folder_name + "*.mid"):
         if (count >= start_file):
