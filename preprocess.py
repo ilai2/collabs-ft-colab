@@ -1,3 +1,4 @@
+from os import startfile
 import tensorflow as tf
 import numpy as np
 from music21 import *
@@ -280,10 +281,30 @@ def deprocess_midi(notes, durations, volumes):
     return midi_score
 
 def main():
-    for file in glob.glob("midi_songs/*.mid"):
-        (notes, durations, volumes) = process_midi(file)
-        write_element_dict("asdf.txt")
-        write_song("fdsa.txt", notes, durations, volumes)
-  
+    folder_name = "data_collection/freemidi_data/freemidi_data/alternative-indie/"
+    
+    start_file = 0
+    count = 0
+
+    global element_to_int_dict
+    try: 
+        element_to_int_dict = read_element_dict(folder_name + "dict.txt")
+    except:
+        element_to_int_dict = {}
+    
+    for file in glob.glob(folder_name + "*.mid"):
+        if (count >= start_file):
+            try:
+                (notes, durations, volumes) = process_midi(file)
+                write_song(folder_name + "songs.txt", notes, durations, volumes)
+            except:
+                pass 
+            if count > 500:
+                print(count)
+                break
+        count = count + 1
+
+    write_element_dict(folder_name + "dict.txt")
+
 if __name__ == '__main__':
 	main()
