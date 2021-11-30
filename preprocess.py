@@ -6,13 +6,15 @@ from fractions import Fraction
 import glob
 # Hyperparameters
 INSTRUMENT_NUM = 18
-
+VOCAB_SIZE = 5000
 # Global Variables
 
 # element name to int dictionary
 # elements are represented as a set of pitches (integers), keys are actually strings b/c no mutable objects as keys
 element_to_int_dict = {"set()" : 0}
 # instrument_class to integer dictionary
+element_to_occurences_dict = {"set()": 0}
+
 instrument_to_int_dict = {
     type(instrument.Instrument()): 0,
     type(instrument.WoodwindInstrument()): 1,
@@ -96,12 +98,13 @@ def process_element(element, old_element):
          element_set = set()
     element_set.union(old_set)
     if str(element_set) in element_to_int_dict:
-         encoding = element_to_int_dict[str(element_set)]
+        element_to_occurences_dict[str(element_set)] = element_to_occurences_dict[str(element_set)] + 1
+        encoding = element_to_int_dict[str(element_set)]
     else:
-         encoding = len(element_to_int_dict)
-
-         element_to_int_dict[str(element_set)] = encoding
-         int_to_element_dict[encoding] = element_set
+        encoding = len(element_to_int_dict)
+        element_to_occurences_dict[str(element_set)] = 1
+        element_to_int_dict[str(element_set)] = encoding
+        int_to_element_dict[encoding] = element_set
     return encoding
 
 def process_part(notes_to_parse, instrument_encoding, notes, durations, volumes):
@@ -173,6 +176,13 @@ def write_element_dict(filepath):
             f.write(str(element_to_int_dict[key]) + " " + str(key) + "\n")
     pass
 
+def write_occurences_dict(filepath):
+    with open(filepath, "w+") as f:
+        f.write(str(len(element_to_occurences_dict)) + "\n")
+        for key in element_to_occurences_dict.keys():
+            f.write(str(element_to_occurences_dict[key]) + " " + str(key) + "\n")
+    pass
+
 def write_song(filepath, notes, durations, volumes):
     (xArray, yArray) = np.nonzero(notes)
     with open(filepath, "a+") as f:
@@ -201,7 +211,7 @@ def read_element_dict(filepath):
         line = f.readline()
         while line:
             split = line.split("{")
-            dict["{" + split[1]] = int(split[0].strip())
+            dict["{" + split[1].strip()] = int(split[0].strip())
             line = f.readline()
     return (size, dict)
 
@@ -236,9 +246,10 @@ def read_song(filepath,lineno):
                     split = tuple.split(",")
                     x = int(split[0])
                     y = int(split[1])
-                    notes[x][y] = int(float(split[2]))
-                    durations[x][y] = int(float(split[3]))
-                    volumes[x][y] = int(float(split[4]))
+                    if int(float(split[2])) < VOCAB_SIZE:
+                        notes[x][y] = int(float(split[2]))
+                        durations[x][y] = int(float(split[3]))
+                        volumes[x][y] = int(float(split[4]))
                 break
     return (notes, durations, volumes)
 
@@ -287,19 +298,21 @@ def deprocess_midi(notes, durations, volumes):
 
 def main():
     # Change this to whatever your folder is!
-    folder_name = "data_collection/freemidi_data/freemidi_data/alternative-indie/"
+    folder_name = "data_collection/freemidi_data/freemidi_data/metal/"
     
     # Change this to whatever the index of the last file you ran it on was!
     start_file = 0
-    end_file = 500
+    end_file = 499
 
     count = 0
-
+    global element_to_occurences_dict
     global element_to_int_dict
     try: 
         (_,element_to_int_dict) = read_element_dict("dict.txt")
+        (_,element_to_occurences_dict) = read_element_dict("occurences.txt")
     except:
         element_to_int_dict = {"set()": 0}
+        element_to_occurences_dict = {"set()": 0}
     
     for file in glob.glob(folder_name + "*.mid"):
         if (count >= start_file):
@@ -314,6 +327,7 @@ def main():
         count = count + 1
 
     write_element_dict("dict.txt")
+    write_occurences_dict("occurences.txt")
 
 if __name__ == '__main__':
 	main()
