@@ -285,8 +285,8 @@ def main():
     folder_name = "data_collection/freemidi_data/freemidi_data/alternative-indie/"
     
     # Change this to whatever the index of the last file you ran it on was!
-    start_file = 501
-    end_file = 1000
+    start_file = 0
+    end_file = 500
 
     count = 0
 
@@ -294,7 +294,7 @@ def main():
     try: 
         (_,element_to_int_dict) = read_element_dict(folder_name + "dict.txt")
     except:
-        element_to_int_dict = {}
+        element_to_int_dict = {0: "p"}
     
     for file in glob.glob(folder_name + "*.mid"):
         if (count >= start_file):
