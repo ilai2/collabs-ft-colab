@@ -292,7 +292,7 @@ def main():
 
     global element_to_int_dict
     try: 
-        (_,element_to_int_dict) = read_element_dict(folder_name + "dict.txt")
+        (_,element_to_int_dict) = read_element_dict("dict.txt")
     except:
         element_to_int_dict = {0: "p"}
     
@@ -308,7 +308,7 @@ def main():
                 break
         count = count + 1
 
-    write_element_dict(folder_name + "dict.txt")
+    write_element_dict("dict.txt")
 
 if __name__ == '__main__':
 	main()
