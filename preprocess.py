@@ -209,7 +209,7 @@ def read_element_dict(filepath):
         line = f.readline()
         while line:
             split = line.split()
-            dict[int(split[0])] = split[1]
+            dict[int(split[1])] = split[0]
             line = f.readline()
     return (size, dict)
 
@@ -285,7 +285,8 @@ def main():
     folder_name = "data_collection/freemidi_data/freemidi_data/alternative-indie/"
     
     # Change this to whatever the index of the last file you ran it on was!
-    start_file = 0
+    start_file = 501
+    end_file = 1000
 
     count = 0
 
@@ -302,7 +303,7 @@ def main():
                 write_song(folder_name + "songs.txt", notes, durations, volumes)
             except:
                 pass
-            if count >= 500:
+            if count >= end_file:
                 print(count)
                 break
         count = count + 1
