@@ -323,7 +323,8 @@ def main():
 
     count = 0
     global element_to_int_dict
-
+    global int_to_element_dict
+    _, int_to_element_dict = read_int_dict("asdf.txt")
     (_, element_to_int_dict) = read_element_dict("dict.txt")
     
     for file in glob.glob(folder_name + "*.mid"):
