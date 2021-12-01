@@ -98,13 +98,14 @@ def process_element(element, old_element):
          element_set = set()
     element_set.union(old_set)
     if str(element_set) in element_to_int_dict:
-        element_to_occurences_dict[str(element_set)] = element_to_occurences_dict[str(element_set)] + 1
+        # element_to_occurences_dict[str(element_set)] = element_to_occurences_dict[str(element_set)] + 1
         encoding = element_to_int_dict[str(element_set)]
     else:
-        encoding = len(element_to_int_dict)
-        element_to_occurences_dict[str(element_set)] = 1
-        element_to_int_dict[str(element_set)] = encoding
-        int_to_element_dict[encoding] = element_set
+        encoding = 0
+        # encoding = len(element_to_int_dict)
+        # element_to_occurences_dict[str(element_set)] = 1
+        # element_to_int_dict[str(element_set)] = encoding
+        # int_to_element_dict[encoding] = element_set
     return encoding
 
 def process_part(notes_to_parse, instrument_encoding, notes, durations, volumes):
@@ -296,23 +297,34 @@ def deprocess_midi(notes, durations, volumes):
     return midi_score
 
 
+def make_final_dict(read_file, write_file):
+    with open(read_file, "r+") as f:    
+        lines = f.readlines()[1:]
+        def key_func(str):
+            return int(str.split(" ")[0])
+        lines.sort(reverse = True, key = key_func)
+        with open(write_file, "w+") as g:
+            count = 1
+            line = lines[1]
+            while key_func(line) >= 10:
+                g.write(str(count))
+                g.write(line[line.find(" "):]) 
+                count = count + 1
+                line = lines[count]
+
+        
 def main():
     # Change this to whatever your folder is!
     folder_name = "data_collection/freemidi_data/freemidi_data/metal/"
     
     # Change this to whatever the index of the last file you ran it on was!
     start_file = 0
-    end_file = 499
+    end_file = 0
 
     count = 0
-    global element_to_occurences_dict
     global element_to_int_dict
-    try: 
-        (_,element_to_int_dict) = read_element_dict("dict.txt")
-        (_,element_to_occurences_dict) = read_element_dict("occurences.txt")
-    except:
-        element_to_int_dict = {"set()": 0}
-        element_to_occurences_dict = {"set()": 0}
+
+    (_, element_to_int_dict) = read_element_dict("dict.txt")
     
     for file in glob.glob(folder_name + "*.mid"):
         if (count >= start_file):
@@ -325,9 +337,6 @@ def main():
                 print(count)
                 break
         count = count + 1
-
-    write_element_dict("dict.txt")
-    write_occurences_dict("occurences.txt")
 
 if __name__ == '__main__':
 	main()
