@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-curl https://bootstrap.pypa.io/get-pip.py | python3.7
 pip install -r requirements.txt
 
 python3.7 model.py
