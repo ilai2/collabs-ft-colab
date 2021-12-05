@@ -1,4 +1,3 @@
-from os import startfile
 import tensorflow as tf
 import numpy as np
 from music21 import *
