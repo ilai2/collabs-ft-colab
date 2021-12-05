@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-curl https://bootstrap.pypa.io/get-pip.py | python
+curl https://bootstrap.pypa.io/get-pip.py | python3
 pip install -r requirements.txt
 
 python3 model.py
