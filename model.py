@@ -6,7 +6,7 @@ from preprocess import read_int_dict, read_song, deprocess_midi, read_element_di
 
 
 class Model(tf.keras.Model):
-    def __init__(self, vocab_size):
+    def __init__(self, vocab_size, num_instruments=18):
         """
         The Model class predicts the next words in a sequence.
 
@@ -19,8 +19,9 @@ class Model(tf.keras.Model):
 
         self.vocab_size = vocab_size
         self.window_size = 20 # DO NOT CHANGE!
-        self.embedding_size = 32 #TODO
-        self.batch_size = 30 #TODO 
+        self.embedding_size = 60 #TODO
+        self.batch_size = 50 #TODO 
+        self.num_instruments = num_instruments
 
         # TODO: initialize embeddings and forward pass weights (weights, biases)
         # Note: You can now use tf.keras.layers!
@@ -34,13 +35,16 @@ class Model(tf.keras.Model):
         self.LSTM2 = tf.keras.layers.LSTM(1024, return_sequences=True, return_state=True)
 
 
-    def call(self, notes, input_state):
+    def call(self, notes, input_state, is_generating=False):
         """
-        :param ndv: as a tensor (batch_size * window_size) (each element (a note) is a tuple of (pitch, duration, volume))
-        :return: as a tensor (batch_size * vocab_size)
+        :param ndv: as a tensor (num_instruments * batch_size * window_size) (each element (a note) is a tuple of (pitch, duration, volume))
+        :return: as a tensor (num_instruments * batch_size * vocab_size)
         """
         
         #TODO: Fill in 
+        if not is_generating:
+            notes = tf.cast(tf.reshape(notes, [self.num_instruments * self.batch_size, self.window_size]), tf.int32)
+        notes = tf.cast(notes, tf.int32)
         notes_embedded = tf.nn.embedding_lookup(self.E, notes)
 
         lstm1_output, _, _ = self.LSTM(notes_embedded)
@@ -50,6 +54,8 @@ class Model(tf.keras.Model):
         logits = self.Dropout(logits)
         logits, state1, state2 = self.LSTM2(logits, initial_state=input_state)
         logits = self.D2(logits)
+        if not is_generating:
+            logits = tf.reshape(logits, [self.num_instruments, self.batch_size, self.window_size, self.vocab_size])
         
         return logits, (state1, state2)
 
@@ -83,18 +89,19 @@ def train(model, train_inputs, train_labels):
     #TODO: Fill in
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
 
-    for i in range(0, np.shape(train_labels)[0], model.batch_size):
-        input = train_inputs[i:model.batch_size+i]
-        input = np.array(input)
-        label = train_labels[i:model.batch_size+i]
-        label = np.array(label)
+    for i in range(0, np.shape(train_labels)[1], model.batch_size):
+        if (i + model.batch_size <= np.shape(train_labels)[1]):
+            input = train_inputs[:,i:model.batch_size+i]
+            input = np.array(input)
+            label = train_labels[:,i:model.batch_size+i]
+            label = np.array(label)
 
-        with tf.GradientTape() as tape:
-            logits, _ = model.call(input, None)
-            loss = model.loss(logits, label)
+            with tf.GradientTape() as tape:
+                logits, _ = model.call(input, None)
+                loss = model.loss(logits, label)
 
-        gradients = tape.gradient(loss, model.trainable_variables)
-        optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+            gradients = tape.gradient(loss, model.trainable_variables)
+            optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
 def generate_sentence(length, vocab, model, sample_n=10):
     """
@@ -109,73 +116,119 @@ def generate_sentence(length, vocab, model, sample_n=10):
     reverse_vocab = {idx: word for word, idx in vocab.items()}
     previous_state = None
 
-    first_note_index = np.random.randint(0, len(vocab) - 1)
-    next_input = [[first_note_index]]
-    score = [reverse_vocab[first_note_index]]
+    next_input = np.empty((model.num_instruments, 1))
+    score_val = []
+
+    for i in range(model.num_instruments):
+        first_note_index = np.random.randint(0, len(vocab) - 1)
+        next_input[i] = [first_note_index]
+        note = reverse_vocab[first_note_index]
+        note = (i, note[1], note[2], note[3])
+        score_val.append(note)
+
+    score = [score_val]
 
     for _ in range(length):
-        logits, previous_state = model.call(next_input, previous_state)
-        logits = np.array(logits[0,0,:])
-        top_n = np.argsort(logits)[-sample_n:]
-        n_logits = np.exp(logits[top_n])/np.exp(logits[top_n]).sum()
-        out_index = np.random.choice(top_n,p=n_logits)
+        logits, previous_state = model.call(next_input, previous_state, is_generating=True)
+        logits = np.array(logits[:,0,:])
 
-        score.append(reverse_vocab[out_index])
-        next_input = [[out_index]]
+        one_note = []
+        next_input = np.empty((model.num_instruments, 1))
+
+        for i in range(len(logits)):
+        #     for j in range(len(logits[0])):
+        #         new_logits.append(logits[i][j])
+        # logits = np.array(new_logits)
+        # print(np.shape(logits))
+            top_n = np.argsort(logits[i])[-sample_n:]
+            n_logits = np.exp(logits[i][top_n])/np.exp(logits[i][top_n]).sum()
+            out_index = np.random.choice(top_n,p=n_logits)
+            note = reverse_vocab[out_index]
+            note = (i, note[1], note[2], note[3])
+            one_note.append(note)
+            next_input[i] = [out_index]
+
+        score.append(one_note)
 
     return score
 
 def main():
-    # TO-DO: Pre-process and vectorize the data
-    # HINT: Please note that you are predicting the next word at each timestep, so you want to remove the last element
-    # from train_x and test_x. You also need to drop the first element from train_y and test_y.
-    # If you don't do this, you will see impossibly small perplexities.
+    # initialize lists for three attributes
+    pitches = []
+    durations = []
+    volumes = []
+
+    # load in 500 songs
+    for a in range(500):
+        pitches_i, durations_i, volumes_i = read_song('pop.txt', a)
+        pitches.append(pitches_i)
+        durations.append(durations_i)
+        volumes.append(volumes_i)
+
+    # reformat songs into 1-d list
+    flattened_pitches = []
+    flattened_durations = []
+    flattened_volumes = []
+    for ii in range(len(pitches)):
+        for jj in range(len(pitches[ii])):
+            for kk in range(len(pitches[ii][jj])):
+                flattened_pitches.append(pitches[ii][jj][kk])
+                flattened_durations.append(durations[ii][jj][kk])
+                flattened_volumes.append(durations[ii][jj][kk])
+
     
-    # TO-DO:  Separate your train and test data into inputs and labels
-    #TODO: Figure out how to actually get the data oop
-    pitches, durations, volumes = read_song('christmas.txt', 0)
+    pitches = np.reshape(np.array(flattened_pitches), (18, -1))
+    durations = np.reshape(np.array(flattened_durations), (18, -1))
+    volumes = np.reshape(np.array(flattened_volumes), (18, -1))
+
+
     notes = []
-    pitches = pitches[12, :]
-    durations = durations[12, :]
-    volumes = volumes[12, :]
     for i in range(0, len(pitches)):
-        notes.append((pitches[i], durations[i], volumes[i]))
+        for j in range(len(pitches[0])):
+            notes.append((i, pitches[i][j], durations[i][j], volumes[i][j]))
         
     vocab = set(list(notes))
     vocab = {w: i for i, w in enumerate(list(vocab))}
 
-    notes = [vocab[x] for x in notes]
-    notes = tf.convert_to_tensor(notes)
+    # notes = [vocab[x] for x in notes]
+    new_notes = np.empty((len(pitches), len(pitches[0])))
+    for k in range(len(notes)):
+        note = notes[k]
+        instrument = note[0]
+        note_pdv = (note[0], note[1], note[2], note[3])
+        new_notes[instrument][k % len(notes[0])] = vocab[note_pdv]
 
+    notes = tf.convert_to_tensor(new_notes)
 
     # TODO: initialize model
     model = Model(len(vocab))
 
     # turn notes tensor into windows
-    train_inputs_indices = notes[:-1]
-    train_labels_indices = notes[1:]
-    remainder_inputs = np.shape(train_inputs_indices)[0] % model.window_size
-    remainder_labels = np.shape(train_labels_indices)[0] % model.window_size
-    train_inputs = train_inputs_indices[:-remainder_inputs]
-    train_labels = train_labels_indices[:-remainder_labels]
-    notes = tf.reshape(train_inputs, [-1, model.window_size])
-    labels = tf.reshape(train_labels, [-1, model.window_size])
+    train_inputs_indices = notes[:,:-1]
+    train_labels_indices = notes[:,1:]
+    remainder_inputs = np.shape(train_inputs_indices)[1] % model.window_size
+    remainder_labels = np.shape(train_labels_indices)[1] % model.window_size
+    train_inputs = train_inputs_indices[:,:-remainder_inputs]
+    train_labels = train_labels_indices[:,:-remainder_labels]
+    notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
+    labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
     # TODO: Set-up the training step
-    train(model, notes, labels)
+    for b in range(10):
+        print ("Epoch Number: ", b)
+        train(model, notes, labels)
     raw_score = generate_sentence(300, vocab, model)
-    score_pitches = []
-    score_durations = []
-    score_volumes = []
-    for k in raw_score:
-        score_pitches.append(k[0])
-        score_durations.append(k[1])
-        score_volumes.append(k[2])
-    score_pitches = tf.expand_dims(score_pitches, 0)
-    score_durations = tf.expand_dims(score_durations, 0)
-    score_volumes = tf.expand_dims(score_volumes, 0)
+    score_pitches = np.empty((18, 301))
+    score_durations = np.empty((18, 301))
+    score_volumes = np.empty((18, 301))
+    for k in range(len(raw_score)):
+        for l in raw_score[k]:
+            score_pitches[l[0]][k] = l[1]
+            score_durations[l[0]][k] = l[2]
+            score_volumes[l[0]][k] = l[3]
+
     _, idict = read_int_dict("dict.txt")
-    midi_score = deprocess_midi(np.array(score_pitches),  np.array(score_durations), np.array(score_volumes), idict)
-    midi_out = midi_score.write('midi', fp='test_christmas.mid')
+    midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
+    midi_out = midi_score.write('midi', fp='test_good_music.mid')
         
 
 if __name__ == '__main__':
