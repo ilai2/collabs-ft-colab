@@ -255,7 +255,7 @@ def read_song(filepath,lineno):
 
 
 
-def deprocess_midi(notes, durations, volumes):
+def deprocess_midi(notes, durations, volumes, int_to_e_dict):
     """
     param :
             the notes matrix
@@ -266,13 +266,13 @@ def deprocess_midi(notes, durations, volumes):
     midi_score = stream.Score()
     for i in range(len(notes)):
         p = stream.Part()
-        p.insert(0, int_to_instrument_dict[i])
+        p.insert(0, int_to_instrument_dict[12])
         p.insert(0, tempo.MetronomeMark(number = 120))
         p.insert(0, meter.TimeSignature('4/4'))
         offset = 0
         for j in range(len(notes[i])):
-            element_encoding = notes[i][j]
-            element_set = int_to_element_dict[element_encoding]
+            element_encoding = int(notes[i][j])
+            element_set = int_to_e_dict[element_encoding]
             if (len(element_set) == 1):
                 new_note = note.Note(midi = list(element_set)[0])
                 new_duration = duration.Duration()
