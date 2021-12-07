@@ -18,7 +18,7 @@ class Model(tf.keras.Model):
         # TODO: initialize vocab_size, embedding_size
 
         self.vocab_size = vocab_size
-        self.window_size = 300 # DO NOT CHANGE!
+        self.window_size = 150 # DO NOT CHANGE!
         self.embedding_size = 60 #TODO
         self.batch_size = 25 #TODO 
         self.num_instruments = num_instruments
