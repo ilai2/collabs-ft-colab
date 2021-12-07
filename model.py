@@ -6,7 +6,7 @@ from preprocess import read_int_dict, read_song, deprocess_midi, read_element_di
 
 
 class Model(tf.keras.Model):
-    def __init__(self, vocab_size, num_instruments=3):
+    def __init__(self, vocab_size, num_instruments=1):
         """
         The Model class predicts the next words in a sequence.
 
@@ -160,11 +160,11 @@ def main():
     volumes = []
 
     # load in 500 songs
-    for a in range(500):
-        pitches_i, durations_i, volumes_i = read_song('metal.txt', a)
-        pitches_i = pitches_i[12:15]
-        durations_i = durations_i[12:15]
-        volumes_i = volumes_i[12:15]
+    for a in range(50):
+        pitches_i, durations_i, volumes_i = read_song('classical.txt', a)
+        pitches_i = pitches_i[13]
+        durations_i = durations_i[13]
+        volumes_i = volumes_i[13]
         pitches.append(pitches_i)
         durations.append(durations_i)
         volumes.append(volumes_i)
@@ -181,9 +181,9 @@ def main():
                 flattened_volumes.append(durations[ii][jj][kk])
 
     
-    pitches = np.reshape(np.array(flattened_pitches), (3, -1))
-    durations = np.reshape(np.array(flattened_durations), (3, -1))
-    volumes = np.reshape(np.array(flattened_volumes), (3, -1))
+    pitches = np.reshape(np.array(flattened_pitches), (1, -1))
+    durations = np.reshape(np.array(flattened_durations), (1, -1))
+    volumes = np.reshape(np.array(flattened_volumes), (1, -1))
 
 
     notes = []
@@ -217,7 +217,7 @@ def main():
     notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
     labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
     # TODO: Set-up the training step
-    for b in range(10):
+    for b in range(15):
         print ("Epoch Number: ", b)
         train(model, notes, labels)
 
