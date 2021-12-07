@@ -46,7 +46,11 @@ soupsieve==2.3.1
 tensorboard==2.7.0
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.0
+<<<<<<< HEAD
 tensorflow==2.7.0
+=======
+tensorflow==2.4.1
+>>>>>>> 94cca193d97fd3ddb181db096ca9bbff308096fd
 tensorflow-estimator==2.7.0
 termcolor==1.1.0
 tomli==1.2.2
