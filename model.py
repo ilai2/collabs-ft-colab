@@ -161,7 +161,7 @@ def main():
 
     # load in 500 songs
     for a in range(500):
-        pitches_i, durations_i, volumes_i = read_song('christmas.txt', a)
+        pitches_i, durations_i, volumes_i = read_song('metal.txt', a)
         pitches_i = pitches_i[12:15]
         durations_i = durations_i[12:15]
         volumes_i = volumes_i[12:15]
