@@ -18,7 +18,7 @@ class Model(tf.keras.Model):
         # TODO: initialize vocab_size, embedding_size
 
         self.vocab_size = vocab_size
-        self.window_size = 20 # DO NOT CHANGE!
+        self.window_size = 300 # DO NOT CHANGE!
         self.embedding_size = 60 #TODO
         self.batch_size = 25 #TODO 
         self.num_instruments = num_instruments
@@ -161,7 +161,7 @@ def main():
 
     # load in 500 songs
     for a in range(50):
-        pitches_i, durations_i, volumes_i = read_song('christmas.txt', a)
+        pitches_i, durations_i, volumes_i = read_song('metal.txt', a)
         pitches.append(pitches_i)
         durations.append(durations_i)
         volumes.append(volumes_i)
