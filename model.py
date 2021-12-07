@@ -6,7 +6,7 @@ from preprocess import read_int_dict, read_song, deprocess_midi, read_element_di
 
 
 class Model(tf.keras.Model):
-    def __init__(self, vocab_size, num_instruments=18):
+    def __init__(self, vocab_size, num_instruments=3):
         """
         The Model class predicts the next words in a sequence.
 
@@ -88,7 +88,7 @@ def train(model, train_inputs, train_labels):
     :return: None
     """
     #TODO: Fill in
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 
     for i in range(0, np.shape(train_labels)[1], model.batch_size):
         if (i + model.batch_size <= np.shape(train_labels)[1]):
@@ -160,8 +160,11 @@ def main():
     volumes = []
 
     # load in 500 songs
-    for a in range(30):
-        pitches_i, durations_i, volumes_i = read_song('metal.txt', a)
+    for a in range(5):
+        pitches_i, durations_i, volumes_i = read_song('pop.txt', a)
+        pitches_i = pitches_i[12:15]
+        durations_i = durations_i[12:15]
+        volumes_i = volumes_i[12:15]
         pitches.append(pitches_i)
         durations.append(durations_i)
         volumes.append(volumes_i)
@@ -178,9 +181,9 @@ def main():
                 flattened_volumes.append(durations[ii][jj][kk])
 
     
-    pitches = np.reshape(np.array(flattened_pitches), (18, -1))
-    durations = np.reshape(np.array(flattened_durations), (18, -1))
-    volumes = np.reshape(np.array(flattened_volumes), (18, -1))
+    pitches = np.reshape(np.array(flattened_pitches), (3, -1))
+    durations = np.reshape(np.array(flattened_durations), (3, -1))
+    volumes = np.reshape(np.array(flattened_volumes), (3, -1))
 
 
     notes = []
@@ -219,9 +222,9 @@ def main():
         train(model, notes, labels)
 
     raw_score = generate_sentence(300, vocab, model)
-    score_pitches = np.empty((18, 301))
-    score_durations = np.empty((18, 301))
-    score_volumes = np.empty((18, 301))
+    score_pitches = np.empty((model.num_instruments, 301))
+    score_durations = np.empty((model.num_instruments, 301))
+    score_volumes = np.empty((model.num_instruments, 301))
     for k in range(len(raw_score)):
         for l in raw_score[k]:
             score_pitches[l[0]][k] = l[1]
