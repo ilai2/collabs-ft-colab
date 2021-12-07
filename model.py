@@ -160,7 +160,7 @@ def main():
     volumes = []
 
     # load in 500 songs
-    for a in range(50):
+    for a in range(100):
         pitches_i, durations_i, volumes_i = read_song('classical.txt', a)
         pitches_i = pitches_i[13]
         durations_i = durations_i[13]
@@ -217,7 +217,7 @@ def main():
     notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
     labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
     # TODO: Set-up the training step
-    for b in range(15):
+    for b in range(50):
         print ("Epoch Number: ", b)
         train(model, notes, labels)
 
