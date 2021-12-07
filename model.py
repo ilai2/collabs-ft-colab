@@ -160,8 +160,17 @@ def main():
     volumes = []
 
     # load in 500 songs
-    for a in range(1000):
-        pitches_i, durations_i, volumes_i = read_song('metal.txt', a)
+    for a in range(100):
+        pitches_i, durations_i, volumes_i = read_song('pop.txt', a)
+        pitches_i = pitches_i[12:15]
+        durations_i = durations_i[12:15]
+        volumes_i = volumes_i[12:15]
+        pitches.append(pitches_i)
+        durations.append(durations_i)
+        volumes.append(volumes_i)
+
+    for c in range(100):
+        pitches_i, durations_i, volumes_i = read_song('punk.txt', c)
         pitches_i = pitches_i[12:15]
         durations_i = durations_i[12:15]
         volumes_i = volumes_i[12:15]
@@ -217,7 +226,7 @@ def main():
     notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
     labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
     # TODO: Set-up the training step
-    for b in range(50):
+    for b in range(10):
         print ("Epoch Number: ", b)
         train(model, notes, labels)
 
@@ -233,7 +242,7 @@ def main():
 
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
-    midi_out = midi_score.write('midi', fp='test_good_music_mac.mid')
+    midi_out = midi_score.write('midi', fp='test_combined_music.mid')
     model.save_weights("weights")
 
 if __name__ == '__main__':
