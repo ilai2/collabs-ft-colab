@@ -28,9 +28,9 @@ class Model(tf.keras.Model):
         # - use tf.keras.layers.Dense for feed forward layers: https://www.tensorflow.org/api_docs/python/tf/keras/layers/Dense
         # - and use tf.keras.layers.GRU or tf.keras.layers.LSTM for your RNN 
         self.E = tf.Variable(tf.random.normal(shape=[self.vocab_size,self.embedding_size], stddev=.01, dtype=tf.float32))
-        self.LSTM = tf.keras.layers.LSTM(512, return_sequences=True, return_state=True)
-        self.LSTM2 = tf.keras.layers.LSTM(1024, return_sequences=True, return_state=True)
-        self.D1 = tf.keras.layers.Dense(1024, activation="relu")
+        self.LSTM = tf.keras.layers.LSTM(256, return_sequences=True, return_state=True)
+        self.LSTM2 = tf.keras.layers.LSTM(512, return_sequences=True, return_state=True)
+        self.D1 = tf.keras.layers.Dense(512, activation="relu")
         self.D2 = tf.keras.layers.Dense(self.vocab_size, activation="softmax")
         self.Dropout = tf.keras.layers.Dropout(0.3)
 
@@ -218,7 +218,6 @@ def main():
         print ("Epoch Number: ", b)
         train(model, notes, labels)
 
-    model.save_weights("weights")
     raw_score = generate_sentence(300, vocab, model)
     score_pitches = np.empty((18, 301))
     score_durations = np.empty((18, 301))
@@ -232,7 +231,7 @@ def main():
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
     midi_out = midi_score.write('midi', fp='test_good_music_mac.mid')
-        
+    model.save_weights("weights")
 
 if __name__ == '__main__':
     main()
