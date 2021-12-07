@@ -20,7 +20,7 @@ class Model(tf.keras.Model):
         self.vocab_size = vocab_size
         self.window_size = 20 # DO NOT CHANGE!
         self.embedding_size = 60 #TODO
-        self.batch_size = 50 #TODO 
+        self.batch_size = 25 #TODO 
         self.num_instruments = num_instruments
 
         # TODO: initialize embeddings and forward pass weights (weights, biases)
@@ -28,11 +28,11 @@ class Model(tf.keras.Model):
         # - use tf.keras.layers.Dense for feed forward layers: https://www.tensorflow.org/api_docs/python/tf/keras/layers/Dense
         # - and use tf.keras.layers.GRU or tf.keras.layers.LSTM for your RNN 
         self.E = tf.Variable(tf.random.normal(shape=[self.vocab_size,self.embedding_size], stddev=.01, dtype=tf.float32))
-        self.LSTM = tf.keras.layers.LSTM(2 * self.embedding_size, return_sequences=True, return_state=True)
-        self.D1 = tf.keras.layers.Dense(1000, activation="relu")
+        self.LSTM = tf.keras.layers.LSTM(512, return_sequences=True, return_state=True)
+        self.LSTM2 = tf.keras.layers.LSTM(1024, return_sequences=True, return_state=True)
+        self.D1 = tf.keras.layers.Dense(1024, activation="relu")
         self.D2 = tf.keras.layers.Dense(self.vocab_size, activation="softmax")
         self.Dropout = tf.keras.layers.Dropout(0.3)
-        self.LSTM2 = tf.keras.layers.LSTM(1024, return_sequences=True, return_state=True)
 
 
     def call(self, notes, input_state, is_generating=False):
@@ -49,11 +49,12 @@ class Model(tf.keras.Model):
 
         lstm1_output, _, _ = self.LSTM(notes_embedded)
         lstm1_output = self.Dropout(lstm1_output)
+        lstm2_output, state1, state2 = self.LSTM2(lstm1_output)
 
-        logits = self.D1(lstm1_output)
+        logits = self.D1(lstm2_output)
         logits = self.Dropout(logits)
-        logits, state1, state2 = self.LSTM2(logits, initial_state=input_state)
         logits = self.D2(logits)
+
         if not is_generating:
             logits = tf.reshape(logits, [self.num_instruments, self.batch_size, self.window_size, self.vocab_size])
         
@@ -159,8 +160,8 @@ def main():
     volumes = []
 
     # load in 500 songs
-    for a in range(500):
-        pitches_i, durations_i, volumes_i = read_song('pop.txt', a)
+    for a in range(50):
+        pitches_i, durations_i, volumes_i = read_song('christmas.txt', a)
         pitches.append(pitches_i)
         durations.append(durations_i)
         volumes.append(volumes_i)
@@ -228,7 +229,7 @@ def main():
 
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
-    midi_out = midi_score.write('midi', fp='test_good_music.mid')
+    midi_out = midi_score.write('midi', fp='test_good_music_mac.mid')
         
 
 if __name__ == '__main__':
