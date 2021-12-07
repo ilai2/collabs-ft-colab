@@ -160,8 +160,8 @@ def main():
     volumes = []
 
     # load in 500 songs
-    for a in range(5):
-        pitches_i, durations_i, volumes_i = read_song('pop.txt', a)
+    for a in range(50):
+        pitches_i, durations_i, volumes_i = read_song('metal.txt', a)
         pitches_i = pitches_i[12:15]
         durations_i = durations_i[12:15]
         volumes_i = volumes_i[12:15]
