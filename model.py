@@ -175,10 +175,10 @@ def main():
     flattened_volumes = []
     for ii in range(len(pitches)):
         for jj in range(len(pitches[ii])):
-            for kk in range(len(pitches[ii][jj])):
-                flattened_pitches.append(pitches[ii][jj][kk])
-                flattened_durations.append(durations[ii][jj][kk])
-                flattened_volumes.append(durations[ii][jj][kk])
+            # for kk in range(len(pitches[ii][jj])):
+            flattened_pitches.append(pitches[ii][jj])
+            flattened_durations.append(durations[ii][jj])
+            flattened_volumes.append(volumes[ii][jj])
 
     
     pitches = np.reshape(np.array(flattened_pitches), (1, -1))
