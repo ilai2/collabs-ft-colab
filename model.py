@@ -20,7 +20,7 @@ class Model(tf.keras.Model):
         self.vocab_size = vocab_size
         self.window_size = 20 # DO NOT CHANGE!
         self.embedding_size = 60 #TODO
-        self.batch_size = 50 #TODO 
+        self.batch_size = 25 #TODO 
         self.num_instruments = num_instruments
 
         # TODO: initialize embeddings and forward pass weights (weights, biases)
@@ -159,8 +159,8 @@ def main():
     volumes = []
 
     # load in 500 songs
-    for a in range(500):
-        pitches_i, durations_i, volumes_i = read_song('pop.txt', a)
+    for a in range(50):
+        pitches_i, durations_i, volumes_i = read_song('christmas.txt', a)
         pitches.append(pitches_i)
         durations.append(durations_i)
         volumes.append(volumes_i)
@@ -228,7 +228,7 @@ def main():
 
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
-    midi_out = midi_score.write('midi', fp='test_good_music.mid')
+    midi_out = midi_score.write('midi', fp='test_good_music_miette.mid')
         
 
 if __name__ == '__main__':
