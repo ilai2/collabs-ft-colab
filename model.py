@@ -19,7 +19,7 @@ class Model(tf.keras.Model):
 
         self.vocab_size = vocab_size
         self.window_size = 100 # DO NOT CHANGE!
-        self.embedding_size = 60 #TODO
+        self.embedding_size = 75 #TODO
         self.batch_size = 25 #TODO 
         self.num_instruments = num_instruments
 
@@ -30,7 +30,7 @@ class Model(tf.keras.Model):
         self.E = tf.Variable(tf.random.normal(shape=[self.vocab_size,self.embedding_size], stddev=.01, dtype=tf.float32))
         self.LSTM = tf.keras.layers.LSTM(256, return_sequences=True, return_state=True)
         self.LSTM2 = tf.keras.layers.LSTM(512, return_sequences=True, return_state=True)
-        self.D1 = tf.keras.layers.Dense(512, activation="relu")
+        self.D1 = tf.keras.layers.Dense(1024, activation="relu")
         self.D2 = tf.keras.layers.Dense(self.vocab_size, activation="softmax")
         self.Dropout = tf.keras.layers.Dropout(0.3)
 
@@ -104,7 +104,7 @@ def train(model, train_inputs, train_labels):
             gradients = tape.gradient(loss, model.trainable_variables)
             optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
-def generate_sentence(length, vocab, model, sample_n=10):
+def generate_sentence(length, vocab, model, sample_n=5):
     """
     Takes a model, vocab, selects from the most likely next word from the model's distribution
 
@@ -217,7 +217,7 @@ def main():
     notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
     labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
     # TODO: Set-up the training step
-    for b in range(50):
+    for b in range(200):
         print ("Epoch Number: ", b)
         train(model, notes, labels)
 
