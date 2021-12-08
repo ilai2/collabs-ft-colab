@@ -166,21 +166,21 @@ def main():
     volumes = []
 
     # load in 500 songs
-    for a in range(20):
-        pitches_f, durations_f, volumes_f = read_song('pop.txt', a)
-        pitches_f = pitches_f[13]
-        durations_f = durations_f[13]
-        volumes_f = volumes_f[13]
-        pitches.append(pitches_f)
-        durations.append(durations_f)
-        volumes.append(volumes_f)
-        # pitches_s, durations_s, volumes_s = read_song('metal.txt', a)
-        # pitches_s = pitches_s[13]
-        # durations_s = durations_s[13]
-        # volumes_s = volumes_s[13]
-        # pitches.append(pitches_s)
-        # durations.append(durations_s)
-        # volumes.append(volumes_s)
+    for a in range(100):
+        # pitches_f, durations_f, volumes_f = read_song('pop.txt', a)
+        # pitches_f = pitches_f[13]
+        # durations_f = durations_f[13]
+        # volumes_f = volumes_f[13]
+        # pitches.append(pitches_f)
+        # durations.append(durations_f)
+        # volumes.append(volumes_f)
+        pitches_s, durations_s, volumes_s = read_song('metal.txt', a)
+        pitches_s = pitches_s[13]
+        durations_s = durations_s[13]
+        volumes_s = volumes_s[13]
+        pitches.append(pitches_s)
+        durations.append(durations_s)
+        volumes.append(volumes_s)
 
     # reformat songs into 1-d list
     flattened_pitches = []
@@ -235,8 +235,8 @@ def main():
         notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
         labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
         # TODO: Set-up the training step
-        for b in range(50):
-            if b % 10 == 0:
+        for b in range(200):
+            if b % 10 == 0 and b >= 50:
                 model.save_weights(str(b) + '.h5')
 
             print ("Epoch Number: ", b)
