@@ -254,7 +254,7 @@ def main():
 
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
-    midi_out = midi_score.write('midi', fp='test_good_music_mac_guitar.mid')
+    midi_out = midi_score.write('midi', fp='test_good_music_popjazz.mid')
     #model.save_weights("weights")
 
 if __name__ == '__main__':
