@@ -166,15 +166,15 @@ def main():
     volumes = []
 
     # load in 500 songs
-    for a in range(100):
-        # pitches_f, durations_f, volumes_f = read_song('pop.txt', a)
-        # pitches_f = pitches_f[13]
-        # durations_f = durations_f[13]
-        # volumes_f = volumes_f[13]
-        # pitches.append(pitches_f)
-        # durations.append(durations_f)
-        # volumes.append(volumes_f)
-        pitches_s, durations_s, volumes_s = read_song('metal.txt', a)
+    for a in range(50):
+        pitches_f, durations_f, volumes_f = read_song('country.txt', a)
+        pitches_f = pitches_f[13]
+        durations_f = durations_f[13]
+        volumes_f = volumes_f[13]
+        pitches.append(pitches_f)
+        durations.append(durations_f)
+        volumes.append(volumes_f)
+        pitches_s, durations_s, volumes_s = read_song('christmas.txt', a)
         pitches_s = pitches_s[13]
         durations_s = durations_s[13]
         volumes_s = volumes_s[13]
@@ -235,8 +235,8 @@ def main():
         notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
         labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
         # TODO: Set-up the training step
-        for b in range(50):
-            if b % 10 == 0:
+        for b in range(200):
+            if b % 10 == 0 and b >= 50:
                 model.save_weights(str(b) + '.h5')
 
             print ("Epoch Number: ", b)
@@ -254,7 +254,7 @@ def main():
 
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
-    midi_out = midi_score.write('midi', fp='test_good_music_metal.mid')
+    midi_out = midi_score.write('midi', fp='test_good_music_countrychristmas.mid')
     #model.save_weights("weights")
 
 if __name__ == '__main__':
