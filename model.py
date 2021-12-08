@@ -220,27 +220,34 @@ def main():
     # TODO: initialize model
     model = Model(len(vocab))
 
+    epoch_num = 0
+
+    if sys.argv[1] == "--load":
+        epoch_num = 1
+    elif sys.argv[1] == "--train":
+        epoch_num = 200
+
+    # turn notes tensor into windows
+    train_inputs_indices = notes[:,:-1]
+    train_labels_indices = notes[:,1:]
+    remainder_inputs = np.shape(train_inputs_indices)[1] % model.window_size
+    remainder_labels = np.shape(train_labels_indices)[1] % model.window_size
+    train_inputs = train_inputs_indices[:,:-remainder_inputs]
+    train_labels = train_labels_indices[:,:-remainder_labels]
+    notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
+    labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
+    # TODO: Set-up the training step
+    for b in range(epoch_num):
+        if b % 10 == 0 and b >= 50 and epoch_num != 1:
+            model.save_weights(str(b) + '.h5')
+
+        print ("Epoch Number: ", b)
+        train(model, notes, labels)
+
     if sys.argv[1] == "--load":
         model.built = True
         model.load_weights(sys.argv[2])
         print("Weights loaded.")
-    elif sys.argv[1] == "--train":
-        # turn notes tensor into windows
-        train_inputs_indices = notes[:,:-1]
-        train_labels_indices = notes[:,1:]
-        remainder_inputs = np.shape(train_inputs_indices)[1] % model.window_size
-        remainder_labels = np.shape(train_labels_indices)[1] % model.window_size
-        train_inputs = train_inputs_indices[:,:-remainder_inputs]
-        train_labels = train_labels_indices[:,:-remainder_labels]
-        notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
-        labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
-        # TODO: Set-up the training step
-        for b in range(200):
-            if b % 10 == 0 and b >= 50:
-                model.save_weights(str(b) + '.h5')
-
-            print ("Epoch Number: ", b)
-            train(model, notes, labels)
 
     raw_score = generate_sentence(300, vocab, model)
     score_pitches = np.empty((model.num_instruments, 301))
@@ -254,7 +261,7 @@ def main():
 
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
-    midi_out = midi_score.write('midi', fp='test_good_music_countrychristmas.mid')
+    midi_out = midi_score.write('midi', fp='test_good_music_testcc.mid')
     #model.save_weights("weights")
 
 if __name__ == '__main__':
