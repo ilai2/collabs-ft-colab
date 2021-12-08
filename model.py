@@ -3,6 +3,7 @@ import numpy as np
 from tensorflow.keras import Model
 from music21 import *
 from preprocess import read_int_dict, read_song, deprocess_midi, read_element_dict
+import sys
 
 
 class Model(tf.keras.Model):
@@ -104,7 +105,7 @@ def train(model, train_inputs, train_labels):
             gradients = tape.gradient(loss, model.trainable_variables)
             optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
-def generate_sentence(length, vocab, model, sample_n=10):
+def generate_sentence(length, vocab, model, sample_n=5):
     """
     Takes a model, vocab, selects from the most likely next word from the model's distribution
 
@@ -154,21 +155,26 @@ def generate_sentence(length, vocab, model, sample_n=10):
     return score
 
 def main():
+    if sys.argv[1] not in {"--train", "--load"}:
+        print("USAGE: python assignment.py <task>")
+        print("<task>: [train/load]")
+        exit()
+
     # initialize lists for three attributes
     pitches = []
     durations = []
     volumes = []
 
     # load in 500 songs
-    for a in range(100):
-        pitches_f, durations_f, volumes_f = read_song('classical.txt', a)
+    for a in range(50):
+        pitches_f, durations_f, volumes_f = read_song('pop.txt', a)
         pitches_f = pitches_f[13]
         durations_f = durations_f[13]
         volumes_f = volumes_f[13]
         pitches.append(pitches_f)
         durations.append(durations_f)
         volumes.append(volumes_f)
-        pitches_s, durations_s, volumes_s = read_song('metal.txt', a)
+        pitches_s, durations_s, volumes_s = read_song('jazz.txt', a)
         pitches_s = pitches_s[13]
         durations_s = durations_s[13]
         volumes_s = volumes_s[13]
@@ -214,19 +220,27 @@ def main():
     # TODO: initialize model
     model = Model(len(vocab))
 
-    # turn notes tensor into windows
-    train_inputs_indices = notes[:,:-1]
-    train_labels_indices = notes[:,1:]
-    remainder_inputs = np.shape(train_inputs_indices)[1] % model.window_size
-    remainder_labels = np.shape(train_labels_indices)[1] % model.window_size
-    train_inputs = train_inputs_indices[:,:-remainder_inputs]
-    train_labels = train_labels_indices[:,:-remainder_labels]
-    notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
-    labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
-    # TODO: Set-up the training step
-    for b in range(200):
-        print ("Epoch Number: ", b)
-        train(model, notes, labels)
+    if sys.argv[1] == "--load":
+        model.built = True
+        model.load_weights(sys.argv[2])
+        print("Weights loaded.")
+    elif sys.argv[1] == "--train":
+        # turn notes tensor into windows
+        train_inputs_indices = notes[:,:-1]
+        train_labels_indices = notes[:,1:]
+        remainder_inputs = np.shape(train_inputs_indices)[1] % model.window_size
+        remainder_labels = np.shape(train_labels_indices)[1] % model.window_size
+        train_inputs = train_inputs_indices[:,:-remainder_inputs]
+        train_labels = train_labels_indices[:,:-remainder_labels]
+        notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
+        labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
+        # TODO: Set-up the training step
+        for b in range(200):
+            if b % 10 == 0 and b >= 50:
+                model.save_weights(str(b) + '.h5')
+
+            print ("Epoch Number: ", b)
+            train(model, notes, labels)
 
     raw_score = generate_sentence(300, vocab, model)
     score_pitches = np.empty((model.num_instruments, 301))
@@ -240,8 +254,8 @@ def main():
 
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
-    midi_out = midi_score.write('midi', fp='test_good_music_mac.mid')
-    model.save_weights("weights")
+    midi_out = midi_score.write('midi', fp='test_good_music_mac_guitar.mid')
+    #model.save_weights("weights")
 
 if __name__ == '__main__':
     main()
