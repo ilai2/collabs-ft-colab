@@ -224,7 +224,7 @@ def main():
     notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
     labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
     # TODO: Set-up the training step
-    for b in range(10):
+    for b in range(200):
         print ("Epoch Number: ", b)
         train(model, notes, labels)
 
