@@ -167,7 +167,7 @@ def main():
         # volumes_f = volumes_f[13]
         # pitches.append(pitches_f)
         # durations.append(durations_f)
-        volumes.append(volumes_f)
+        #volumes.append(volumes_f)
         pitches_s, durations_s, volumes_s = read_song('metal.txt', a)
         pitches_s = pitches_s[13]
         durations_s = durations_s[13]
