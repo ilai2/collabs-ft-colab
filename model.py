@@ -225,7 +225,7 @@ def main():
     if sys.argv[1] == "--load":
         epoch_num = 1
     elif sys.argv[1] == "--train":
-        epoch_num = 10
+        epoch_num = 200
 
     # turn notes tensor into windows
     train_inputs_indices = notes[:,:-1]
