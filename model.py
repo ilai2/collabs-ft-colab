@@ -235,8 +235,8 @@ def main():
         notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
         labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
         # TODO: Set-up the training step
-        for b in range(200):
-            if b % 10 == 0 and b >= 50:
+        for b in range(750):
+            if b % 10 == 0 and b >= 550:
                 model.save_weights(str(b) + '.h5')
 
             print ("Epoch Number: ", b)
