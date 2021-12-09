@@ -167,17 +167,17 @@ def main():
 
     # load in 500 songs
     for a in range(50):
-        pitches_f, durations_f, volumes_f = read_song('country.txt', a)
-        pitches_f = pitches_f[12]
-        durations_f = durations_f[12]
-        volumes_f = volumes_f[12]
+        pitches_f, durations_f, volumes_f = read_song('dance-electric.txt', a)
+        pitches_f = pitches_f[13]
+        durations_f = durations_f[13]
+        volumes_f = volumes_f[13]
         pitches.append(pitches_f)
         durations.append(durations_f)
         volumes.append(volumes_f)
-        pitches_s, durations_s, volumes_s = read_song('christmas.txt', a)
-        pitches_s = pitches_s[12]
-        durations_s = durations_s[12]
-        volumes_s = volumes_s[12]
+        pitches_s, durations_s, volumes_s = read_song('rnb-soul.txt', a)
+        pitches_s = pitches_s[13]
+        durations_s = durations_s[13]
+        volumes_s = volumes_s[13]
         pitches.append(pitches_s)
         durations.append(durations_s)
         volumes.append(volumes_s)
@@ -225,7 +225,7 @@ def main():
     if sys.argv[1] == "--load":
         epoch_num = 1
     elif sys.argv[1] == "--train":
-        epoch_num = 200
+        epoch_num = 10
 
     # turn notes tensor into windows
     train_inputs_indices = notes[:,:-1]
@@ -264,7 +264,7 @@ def main():
 
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
-    midi_out = midi_score.write('midi', fp='test_good_music_countrychristmas.mid')
+    midi_out = midi_score.write('midi', fp='test_good_music_electricrnb.mid')
     #model.save_weights("weights")
 
 if __name__ == '__main__':
