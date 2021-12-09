@@ -169,14 +169,14 @@ def main():
 
     # load in songs 
     for a in range(100):
-        pitches_f, durations_f, volumes_f = read_song('blues.txt', a)
+        pitches_f, durations_f, volumes_f = read_song('classical.txt', a)
         pitches_f = pitches_f[13]
         durations_f = durations_f[13]
         volumes_f = volumes_f[13]
         pitches.append(pitches_f)
         durations.append(durations_f)
         volumes.append(volumes_f)
-        # pitches_s, durations_s, volumes_s = read_song('pop.txt', a)
+        # pitches_s, durations_s, volumes_s = read_song('jazz.txt', a)
         # pitches_s = pitches_s[13]
         # durations_s = durations_s[13]
         # volumes_s = volumes_s[13]
@@ -242,7 +242,7 @@ def main():
 
     # save weights 
     for b in range(epoch_num):
-        if b % 10 == 0 and b >= 0 and epoch_num != 1:
+        if (b+1) % 10 == 0 and b >= 9 and epoch_num != 1:
             model.save_weights(str(b) + '.h5')
 
         print ("Epoch Number: ", b)
@@ -271,7 +271,7 @@ def main():
     # write score to midi
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
-    midi_score.write('midi', fp='test_good_music_blues.mid')
+    midi_score.write('midi', fp='test_good_music_classical.mid')
 
 if __name__ == '__main__':
     main()
