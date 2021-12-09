@@ -2,32 +2,29 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras import Model
 from music21 import *
-from preprocess import read_int_dict, read_song, deprocess_midi, read_element_dict
+from preprocess import read_int_dict, read_song, deprocess_midi
 import sys
 
 
 class Model(tf.keras.Model):
     def __init__(self, vocab_size, num_instruments=1):
         """
-        The Model class predicts the next words in a sequence.
+        The Model class predicts the next notes in a score
 
-        :param vocab_size: The number of unique words in the data
+        :param vocab_size: the size of the vocab
+        :param num_instruments: the number of instruments to train on (default is 1)
         """
 
         super(Model, self).__init__()
 
-        # TODO: initialize vocab_size, embedding_size
-
+        # hyperparameters
         self.vocab_size = vocab_size
-        self.window_size = 100 # DO NOT CHANGE!
-        self.embedding_size = 75 #TODO
-        self.batch_size = 25 #TODO 
+        self.window_size = 100 
+        self.embedding_size = 75 
+        self.batch_size = 25 
         self.num_instruments = num_instruments
 
-        # TODO: initialize embeddings and forward pass weights (weights, biases)
-        # Note: You can now use tf.keras.layers!
-        # - use tf.keras.layers.Dense for feed forward layers: https://www.tensorflow.org/api_docs/python/tf/keras/layers/Dense
-        # - and use tf.keras.layers.GRU or tf.keras.layers.LSTM for your RNN 
+        # model architecture
         self.E = tf.Variable(tf.random.normal(shape=[self.vocab_size,self.embedding_size], stddev=.01, dtype=tf.float32))
         self.LSTM = tf.keras.layers.LSTM(256, return_sequences=True, return_state=True)
         self.LSTM2 = tf.keras.layers.LSTM(512, return_sequences=True, return_state=True)
@@ -36,45 +33,45 @@ class Model(tf.keras.Model):
         self.Dropout = tf.keras.layers.Dropout(0.3)
 
 
-    def call(self, notes, input_state, is_generating=False):
+    def call(self, notes, is_generating=False):
         """
-        :param ndv: as a tensor (num_instruments * batch_size * window_size) (each element (a note) is a tuple of (pitch, duration, volume))
-        :return: as a tensor (num_instruments * batch_size * vocab_size)
-        """
-        
-        #TODO: Fill in 
+        :param notes: a (num_instruments * batch_size * window_size) tensor of notes
+                      where each note is represented as a (pitch, duration, volume)
+        : param is_generating: boolean indicating whether the model is generating music
+        :return: a (num_instruments * batch_size * window_size * vocab_size) tensor of probabilities
+        """        
+        # flatten input across instruments axis if training
         if not is_generating:
             notes = tf.cast(tf.reshape(notes, [self.num_instruments * self.batch_size, self.window_size]), tf.int32)
         notes = tf.cast(notes, tf.int32)
-        notes_embedded = tf.nn.embedding_lookup(self.E, notes)
 
+        # embed notes and run through RNN
+        notes_embedded = tf.nn.embedding_lookup(self.E, notes)
         lstm1_output, _, _ = self.LSTM(notes_embedded)
         lstm1_output = self.Dropout(lstm1_output)
-        lstm2_output, state1, state2 = self.LSTM2(lstm1_output)
+        lstm2_output, _, _ = self.LSTM2(lstm1_output)
 
+        # predict probabiliies using Dense layers
         logits = self.D1(lstm2_output)
         logits = self.Dropout(logits)
         logits = self.D2(logits)
 
+        # reshape if training
         if not is_generating:
             logits = tf.reshape(logits, [self.num_instruments, self.batch_size, self.window_size, self.vocab_size])
         
-        return logits, (state1, state2)
+        return logits
 
     def loss(self, probs, labels):
         """
         Calculates average cross entropy sequence to sequence loss of the prediction
-        
-        NOTE: You have to use np.reduce_mean and not np.reduce_sum when calculating your loss
 
-        :param logits: a matrix of shape (batch_size, window_size, vocab_size) as a tensor
-        :param labels: matrix of shape (batch_size, window_size) containing the labels
+        :param logits: a tensor of shape (num_instruments * batch_size * window_size * vocab_size)
+                       containing probabilities
+        :param labels: a tensor of shape (num_instruments * batch_size * window_size) 
+                       containing labels
         :return: the loss of the model as a tensor of size 1
         """
-
-        #TODO: Fill in
-        #We recommend using tf.keras.losses.sparse_categorical_crossentropy
-        #https://www.tensorflow.org/api_docs/python/tf/keras/losses/sparse_categorical_crossentropy
 
         return tf.reduce_mean(tf.keras.metrics.sparse_categorical_crossentropy(labels, probs))
 
@@ -84,13 +81,17 @@ def train(model, train_inputs, train_labels):
     Runs through one epoch - all training examples.
 
     :param model: the initilized model to use for forward and backward pass
-    :param train_inputs: train inputs (all inputs for training) of shape (num_inputs,)
-    :param train_labels: train labels (all labels for training) of shape (num_labels,)
+    :param train_inputs: train inputs (all inputs for training) of shape (num_instruments * num_inputs)
+    :param train_labels: train labels (all labels for training) of shape (num_instruments * num_labels)
     :return: None
     """
-    #TODO: Fill in
+    # define an optimizer
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+
+    # calculate loss
     total_loss = 0
+
+    # complete one epoch, taking batch_size shape chunks of the training data
     for i in range(0, np.shape(train_labels)[1], model.batch_size):
         if (i + model.batch_size <= np.shape(train_labels)[1]):
             input = train_inputs[:,i:model.batch_size+i]
@@ -98,29 +99,32 @@ def train(model, train_inputs, train_labels):
             label = train_labels[:,i:model.batch_size+i]
             label = np.array(label)
             with tf.GradientTape() as tape:
-                logits, _ = model.call(input, None)
+                logits = model.call(input)
                 loss = model.loss(logits, label)
             total_loss += loss
             gradients = tape.gradient(loss, model.trainable_variables)
             optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-    print(total_loss / (np.shape(train_labels)[1] / model.batch_size))
+    
+    # print perplexity
+    print(np.exp(total_loss / (np.shape(train_labels)[1] / model.batch_size)))
 
-def generate_sentence(length, vocab, model, sample_n=5):
+def generate_score(length, vocab, model, sample_n=5):
     """
-    Takes a model, vocab, selects from the most likely next word from the model's distribution
+    Takes a model, vocab, selects the most likely next note
 
+    :param length: number of notes in score
+    :param vocab: dictionary, note to id mapping
     :param model: trained RNN model
-    :param vocab: dictionary, word to id mapping
+    :sample_n: number of closest predictions to choose note from
     :return: None
     """
 
-    #NOTE: Feel free to play around with different sample_n values
     reverse_vocab = {idx: word for word, idx in vocab.items()}
-    previous_state = None
 
     next_input = np.empty((model.num_instruments, 1))
     score_val = []
 
+    # generate start for each instrument
     for i in range(model.num_instruments):
         first_note_index = np.random.randint(0, len(vocab) - 1)
         next_input[i] = [first_note_index]
@@ -130,18 +134,15 @@ def generate_sentence(length, vocab, model, sample_n=5):
 
     score = [score_val]
 
+    # call model on is_generating to get most likely next note for each instrument
     for _ in range(length):
-        logits, previous_state = model.call(next_input, previous_state, is_generating=True)
+        logits = model.call(next_input, is_generating=True)
         logits = np.array(logits[:,0,:])
 
         one_note = []
         next_input = np.empty((model.num_instruments, 1))
 
         for i in range(len(logits)):
-        #     for j in range(len(logits[0])):
-        #         new_logits.append(logits[i][j])
-        # logits = np.array(new_logits)
-        # print(np.shape(logits))
             top_n = np.argsort(logits[i])[-sample_n:]
             n_logits = np.exp(logits[i][top_n])/np.exp(logits[i][top_n]).sum()
             out_index = np.random.choice(top_n,p=n_logits)
@@ -150,6 +151,7 @@ def generate_sentence(length, vocab, model, sample_n=5):
             one_note.append(note)
             next_input[i] = [out_index]
 
+        # add new note to score
         score.append(one_note)
 
     return score
@@ -165,7 +167,7 @@ def main():
     durations = []
     volumes = []
 
-    # load in 500 songs (17 taylor swift, 19 oned)
+    # load in songs 
     for a in range(50):
         pitches_f, durations_f, volumes_f = read_song('classical.txt', a)
         pitches_f = pitches_f[13]
@@ -174,13 +176,6 @@ def main():
         pitches.append(pitches_f)
         durations.append(durations_f)
         volumes.append(volumes_f)
-        # pitches_s, durations_s, volumes_s = read_song('pop.txt', a)
-        # pitches_s = pitches_s[13]
-        # durations_s = durations_s[13]
-        # volumes_s = volumes_s[13]
-        # pitches.append(pitches_s)
-        # durations.append(durations_s)
-        # volumes.append(volumes_s)
 
     # reformat songs into 1-d list
     flattened_pitches = []
@@ -188,7 +183,6 @@ def main():
     flattened_volumes = []
     for ii in range(len(pitches)):
         for jj in range(len(pitches[ii])):
-            # for kk in range(len(pitches[ii][jj])):
             flattened_pitches.append(pitches[ii][jj])
             flattened_durations.append(durations[ii][jj])
             flattened_volumes.append(volumes[ii][jj])
@@ -198,16 +192,17 @@ def main():
     durations = np.reshape(np.array(flattened_durations), (1, -1))
     volumes = np.reshape(np.array(flattened_volumes), (1, -1))
 
-
+    # combine features into tuple
     notes = []
     for i in range(0, len(pitches)):
         for j in range(len(pitches[0])):
             notes.append((i, pitches[i][j], durations[i][j], volumes[i][j]))
-        
+    
+    # create vocab
     vocab = set(list(notes))
     vocab = {w: i for i, w in enumerate(list(vocab))}
 
-    # notes = [vocab[x] for x in notes]
+   # create notes matrix, reshaping "flattened" matrix for each instrument
     new_notes = np.empty((len(pitches), len(pitches[0])))
     for k in range(len(notes)):
         note = notes[k]
@@ -217,9 +212,10 @@ def main():
 
     notes = tf.convert_to_tensor(new_notes)
 
-    # TODO: initialize model
+    # initialize model
     model = Model(len(vocab))
 
+    # initialize number of epochs depending on if training or using pretrained weights
     epoch_num = 0
 
     if sys.argv[1] == "--load":
@@ -236,7 +232,8 @@ def main():
     train_labels = train_labels_indices[:,:-remainder_labels]
     notes = tf.reshape(train_inputs, [len(train_inputs), -1, model.window_size])
     labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
-    # TODO: Set-up the training step
+
+    # save weights 
     for b in range(epoch_num):
         if b % 10 == 0 and b >= 550 and epoch_num != 1:
             model.save_weights(str(b) + '.h5')
@@ -252,7 +249,9 @@ def main():
         model.load_weights(sys.argv[2])
         print("Weights loaded.")
 
-    raw_score = generate_sentence(300, vocab, model)
+    raw_score = generate_score(300, vocab, model)
+
+    # reconvert score to format for deprocessing
     score_pitches = np.empty((model.num_instruments, 301))
     score_durations = np.empty((model.num_instruments, 301))
     score_volumes = np.empty((model.num_instruments, 301))
@@ -262,10 +261,10 @@ def main():
             score_durations[l[0]][k] = l[2]
             score_volumes[l[0]][k] = l[3]
 
+    # write score to midi
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
-    midi_out = midi_score.write('midi', fp='test_good_music_classicalpop.mid')
-    #model.save_weights("weights")
+    midi_score.write('midi', fp='test_good_music_classicalpop.mid')
 
 if __name__ == '__main__':
     main()
