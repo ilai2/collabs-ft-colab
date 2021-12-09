@@ -266,7 +266,7 @@ def deprocess_midi(notes, durations, volumes, int_to_e_dict):
     midi_score = stream.Score()
     for i in range(len(notes)):
         p = stream.Part()
-        p.insert(0, int_to_instrument_dict[i+16])
+        p.insert(0, int_to_instrument_dict[i+13])
         p.insert(0, tempo.MetronomeMark(number = 120))
         p.insert(0, meter.TimeSignature('4/4'))
         offset = 0

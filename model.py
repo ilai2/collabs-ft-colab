@@ -168,9 +168,9 @@ def main():
     # load in 500 songs
     for a in range(17):
         pitches_f, durations_f, volumes_f = read_song('tswift_songs.txt', a)
-        pitches_f = pitches_f[16]
-        durations_f = durations_f[16]
-        volumes_f = volumes_f[16]
+        pitches_f = pitches_f[13]
+        durations_f = durations_f[13]
+        volumes_f = volumes_f[13]
         pitches.append(pitches_f)
         durations.append(durations_f)
         volumes.append(volumes_f)
@@ -225,7 +225,7 @@ def main():
     if sys.argv[1] == "--load":
         epoch_num = 1
     elif sys.argv[1] == "--train":
-        epoch_num = 200
+        epoch_num = 50
 
     # turn notes tensor into windows
     train_inputs_indices = notes[:,:-1]
