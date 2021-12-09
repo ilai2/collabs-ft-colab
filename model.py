@@ -103,7 +103,7 @@ def train(model, train_inputs, train_labels):
             total_loss += loss
             gradients = tape.gradient(loss, model.trainable_variables)
             optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-    print(total_loss / model.batch_size)
+    print(total_loss / (np.shape(train_labels)[1] / model.batch_size))
 
 def generate_sentence(length, vocab, model, sample_n=5):
     """
