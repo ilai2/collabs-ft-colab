@@ -165,9 +165,9 @@ def main():
     durations = []
     volumes = []
 
-    # load in 500 songs
-    for a in range(17):
-        pitches_f, durations_f, volumes_f = read_song('tswift_songs.txt', a)
+    # load in 500 songs (17 taylor swift, 19 oned)
+    for a in range(19):
+        pitches_f, durations_f, volumes_f = read_song('oned_songs.txt', a)
         pitches_f = pitches_f[13]
         durations_f = durations_f[13]
         volumes_f = volumes_f[13]
