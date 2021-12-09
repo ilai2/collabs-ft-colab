@@ -101,7 +101,7 @@ def train(model, train_inputs, train_labels):
             with tf.GradientTape() as tape:
                 logits, _ = model.call(input, None)
                 loss = model.loss(logits, label)
-
+            print(loss)
             gradients = tape.gradient(loss, model.trainable_variables)
             optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
@@ -174,13 +174,13 @@ def main():
         pitches.append(pitches_f)
         durations.append(durations_f)
         volumes.append(volumes_f)
-        pitches_s, durations_s, volumes_s = read_song('pop.txt', a)
-        pitches_s = pitches_s[13]
-        durations_s = durations_s[13]
-        volumes_s = volumes_s[13]
-        pitches.append(pitches_s)
-        durations.append(durations_s)
-        volumes.append(volumes_s)
+        # pitches_s, durations_s, volumes_s = read_song('pop.txt', a)
+        # pitches_s = pitches_s[13]
+        # durations_s = durations_s[13]
+        # volumes_s = volumes_s[13]
+        # pitches.append(pitches_s)
+        # durations.append(durations_s)
+        # volumes.append(volumes_s)
 
     # reformat songs into 1-d list
     flattened_pitches = []
@@ -225,7 +225,7 @@ def main():
     if sys.argv[1] == "--load":
         epoch_num = 1
     elif sys.argv[1] == "--train":
-        epoch_num = 750
+        epoch_num = 20
 
     # turn notes tensor into windows
     train_inputs_indices = notes[:,:-1]
