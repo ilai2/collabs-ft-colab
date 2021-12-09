@@ -167,20 +167,20 @@ def main():
 
     # load in 500 songs
     for a in range(50):
-        pitches_f, durations_f, volumes_f = read_song('dance-electric.txt', a)
-        pitches_f = pitches_f[13]
-        durations_f = durations_f[13]
-        volumes_f = volumes_f[13]
-        pitches.append(pitches_f)
-        durations.append(durations_f)
-        volumes.append(volumes_f)
-        # pitches_s, durations_s, volumes_s = read_song('rnb-soul.txt', a)
-        # pitches_s = pitches_s[13]
-        # durations_s = durations_s[13]
-        # volumes_s = volumes_s[13]
-        # pitches.append(pitches_s)
-        # durations.append(durations_s)
-        # volumes.append(volumes_s)
+        # pitches_f, durations_f, volumes_f = read_song('dance-electric.txt', a)
+        # pitches_f = pitches_f[13]
+        # durations_f = durations_f[13]
+        # volumes_f = volumes_f[13]
+        # pitches.append(pitches_f)
+        # durations.append(durations_f)
+        # volumes.append(volumes_f)
+        pitches_s, durations_s, volumes_s = read_song('rnb-soul.txt', a)
+        pitches_s = pitches_s[13]
+        durations_s = durations_s[13]
+        volumes_s = volumes_s[13]
+        pitches.append(pitches_s)
+        durations.append(durations_s)
+        volumes.append(volumes_s)
 
     # reformat songs into 1-d list
     flattened_pitches = []
