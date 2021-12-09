@@ -242,7 +242,7 @@ def main():
 
     # save weights 
     for b in range(epoch_num):
-        if b % 10 == 0 and b >= 550 and epoch_num != 1:
+        if b % 10 == 0 and b >= 0 and epoch_num != 1:
             model.save_weights(str(b) + '.h5')
 
         print ("Epoch Number: ", b)
