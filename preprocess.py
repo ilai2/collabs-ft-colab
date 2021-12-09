@@ -4,7 +4,7 @@ from music21 import *
 from fractions import Fraction
 import glob
 # Hyperparameters
-INSTRUMENT_NUM = 18
+INSTRUMENT_NUM = 19
 VOCAB_SIZE = 5000
 # Global Variables
 
