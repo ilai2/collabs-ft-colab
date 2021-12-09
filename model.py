@@ -167,14 +167,14 @@ def main():
 
     # load in 500 songs (17 taylor swift, 19 oned)
     for a in range(50):
-        pitches_f, durations_f, volumes_f = read_song('blues.txt', a)
+        pitches_f, durations_f, volumes_f = read_song('classical.txt', a)
         pitches_f = pitches_f[13]
         durations_f = durations_f[13]
         volumes_f = volumes_f[13]
         pitches.append(pitches_f)
         durations.append(durations_f)
         volumes.append(volumes_f)
-        pitches_s, durations_s, volumes_s = read_song('christian-gospel.txt', a)
+        pitches_s, durations_s, volumes_s = read_song('pop.txt', a)
         pitches_s = pitches_s[13]
         durations_s = durations_s[13]
         volumes_s = volumes_s[13]
@@ -225,7 +225,7 @@ def main():
     if sys.argv[1] == "--load":
         epoch_num = 1
     elif sys.argv[1] == "--train":
-        epoch_num = 200
+        epoch_num = 750
 
     # turn notes tensor into windows
     train_inputs_indices = notes[:,:-1]
@@ -238,7 +238,7 @@ def main():
     labels = tf.reshape(train_labels, [len(train_inputs), -1, model.window_size])
     # TODO: Set-up the training step
     for b in range(epoch_num):
-        if b % 10 == 0 and b >= 50 and epoch_num != 1:
+        if b % 10 == 0 and b >= 550 and epoch_num != 1:
             model.save_weights(str(b) + '.h5')
 
         print ("Epoch Number: ", b)
@@ -264,7 +264,7 @@ def main():
 
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
-    midi_out = midi_score.write('midi', fp='test_good_music_bluesgospel.mid')
+    midi_out = midi_score.write('midi', fp='test_good_music_classicalpop.mid')
     #model.save_weights("weights")
 
 if __name__ == '__main__':
