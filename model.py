@@ -90,20 +90,20 @@ def train(model, train_inputs, train_labels):
     """
     #TODO: Fill in
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-
+    total_loss = 0
     for i in range(0, np.shape(train_labels)[1], model.batch_size):
         if (i + model.batch_size <= np.shape(train_labels)[1]):
             input = train_inputs[:,i:model.batch_size+i]
             input = np.array(input)
             label = train_labels[:,i:model.batch_size+i]
             label = np.array(label)
-
             with tf.GradientTape() as tape:
                 logits, _ = model.call(input, None)
                 loss = model.loss(logits, label)
-            print(loss)
+            total_loss += loss
             gradients = tape.gradient(loss, model.trainable_variables)
             optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+    print(total_loss / model.batch_size)
 
 def generate_sentence(length, vocab, model, sample_n=5):
     """
