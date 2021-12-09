@@ -168,9 +168,9 @@ def main():
     # load in 500 songs
     for a in range(17):
         pitches_f, durations_f, volumes_f = read_song('tswift_songs.txt', a)
-        pitches_f = pitches_f[7]
-        durations_f = durations_f[7]
-        volumes_f = volumes_f[7]
+        pitches_f = pitches_f[12]
+        durations_f = durations_f[12]
+        volumes_f = volumes_f[12]
         pitches.append(pitches_f)
         durations.append(durations_f)
         volumes.append(volumes_f)
