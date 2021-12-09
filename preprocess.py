@@ -292,7 +292,7 @@ def deprocess_midi(notes, durations, volumes, int_to_e_dict):
                 new_chord.volume = volumes[i][j]
                 p.insert(Fraction(offset, 12), new_chord)
             #offset = offset + 1
-            offset = offset + 6
+            offset = offset + 5
         midi_score.insert(0, p)
     return midi_score
 

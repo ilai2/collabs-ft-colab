@@ -168,14 +168,21 @@ def main():
     volumes = []
 
     # load in songs 
-    for a in range(50):
-        pitches_f, durations_f, volumes_f = read_song('classical.txt', a)
+    for a in range(100):
+        pitches_f, durations_f, volumes_f = read_song('blues.txt', a)
         pitches_f = pitches_f[13]
         durations_f = durations_f[13]
         volumes_f = volumes_f[13]
         pitches.append(pitches_f)
         durations.append(durations_f)
         volumes.append(volumes_f)
+        # pitches_s, durations_s, volumes_s = read_song('pop.txt', a)
+        # pitches_s = pitches_s[13]
+        # durations_s = durations_s[13]
+        # volumes_s = volumes_s[13]
+        # pitches.append(pitches_s)
+        # durations.append(durations_s)
+        # volumes.append(volumes_s)
 
     # reformat songs into 1-d list
     flattened_pitches = []
@@ -221,7 +228,7 @@ def main():
     if sys.argv[1] == "--load":
         epoch_num = 1
     elif sys.argv[1] == "--train":
-        epoch_num = 20
+        epoch_num = 50
 
     # turn notes tensor into windows
     train_inputs_indices = notes[:,:-1]
@@ -264,7 +271,7 @@ def main():
     # write score to midi
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
-    midi_score.write('midi', fp='test_good_music_classicalpop.mid')
+    midi_score.write('midi', fp='test_good_music_blues.mid')
 
 if __name__ == '__main__':
     main()
