@@ -166,7 +166,7 @@ def main():
     volumes = []
 
     # load in 500 songs (17 taylor swift, 19 oned)
-    for a in range(19):
+    for a in range(17):
         pitches_f, durations_f, volumes_f = read_song('oned_songs.txt', a)
         pitches_f = pitches_f[13]
         durations_f = durations_f[13]
@@ -174,13 +174,13 @@ def main():
         pitches.append(pitches_f)
         durations.append(durations_f)
         volumes.append(volumes_f)
-        # pitches_s, durations_s, volumes_s = read_song('rnb-soul.txt', a)
-        # pitches_s = pitches_s[7]
-        # durations_s = durations_s[7]
-        # volumes_s = volumes_s[7]
-        # pitches.append(pitches_s)
-        # durations.append(durations_s)
-        # volumes.append(volumes_s)
+        pitches_s, durations_s, volumes_s = read_song('tswift_songs.txt', a)
+        pitches_s = pitches_s[7]
+        durations_s = durations_s[7]
+        volumes_s = volumes_s[7]
+        pitches.append(pitches_s)
+        durations.append(durations_s)
+        volumes.append(volumes_s)
 
     # reformat songs into 1-d list
     flattened_pitches = []
@@ -225,7 +225,7 @@ def main():
     if sys.argv[1] == "--load":
         epoch_num = 1
     elif sys.argv[1] == "--train":
-        epoch_num = 50
+        epoch_num = 100
 
     # turn notes tensor into windows
     train_inputs_indices = notes[:,:-1]
@@ -264,7 +264,7 @@ def main():
 
     _, idict = read_int_dict("dict.txt")
     midi_score = deprocess_midi(score_pitches, score_durations, score_volumes, idict)
-    midi_out = midi_score.write('midi', fp='test_good_music_tswift.mid')
+    midi_out = midi_score.write('midi', fp='test_good_music_onedtswift.mid')
     #model.save_weights("weights")
 
 if __name__ == '__main__':
