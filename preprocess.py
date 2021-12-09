@@ -4,7 +4,7 @@ from music21 import *
 from fractions import Fraction
 import glob
 # Hyperparameters
-INSTRUMENT_NUM = 19
+INSTRUMENT_NUM = 18
 VOCAB_SIZE = 5000
 # Global Variables
 
@@ -32,8 +32,7 @@ instrument_to_int_dict = {
     type(instrument.UnpitchedPercussion()): 14,
     type(instrument.AcousticGuitar()): 15,
     type(instrument.AltoSaxophone()): 16,
-    type(instrument.KeyboardInstrument()): 17,
-    type(instrument.MezzoSoprano()): 18
+    type(instrument.KeyboardInstrument()): 17
 }
 # the same as element_to_int_dict but with keys and values swapped
 int_to_element_dict = {0: set()}
@@ -57,8 +56,7 @@ int_to_instrument_dict = {
     14: instrument.UnpitchedPercussion(),
     15: instrument.AcousticGuitar(),
     16: instrument.AltoSaxophone(),
-    17: instrument.Piano(),
-    18: instrument.MezzoSoprano()
+    17: instrument.Piano()
 }
 
 def process_instrument(instr):
@@ -268,7 +266,7 @@ def deprocess_midi(notes, durations, volumes, int_to_e_dict):
     midi_score = stream.Score()
     for i in range(len(notes)):
         p = stream.Part()
-        p.insert(0, int_to_instrument_dict[i+18])
+        p.insert(0, int_to_instrument_dict[i+16])
         p.insert(0, tempo.MetronomeMark(number = 120))
         p.insert(0, meter.TimeSignature('4/4'))
         offset = 0
