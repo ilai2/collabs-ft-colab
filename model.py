@@ -125,6 +125,7 @@ def generate_score(length, vocab, model, sample_n=5):
 
     # initialize next input, which will be passed into the model
     next_input = np.empty((model.num_instruments, 1))
+    # initialize first note to be added to score
     score_val = []
 
     # randomly generate start for each instrument
