@@ -42,8 +42,8 @@ class Model(tf.keras.Model):
         """        
         # flatten input across instruments axis if training
         if not is_generating:
-            notes = tf.cast(tf.reshape(notes, [self.num_instruments * self.batch_size, self.window_size]), tf.int32)
-        notes = tf.expand_dims(tf.cast(notes, tf.int32), -1)
+            notes = tf.cast(tf.reshape(notes, [self.num_instruments * self.batch_size, self.window_size, 1]), tf.int32)
+        notes = tf.cast(notes, tf.int32)
 
         # embed notes and run through RNN
         # notes_embedded = tf.nn.embedding_lookup(self.E, notes)
