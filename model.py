@@ -46,8 +46,10 @@ class Model(tf.keras.Model):
         notes = tf.cast(notes, tf.int32)
 
         # embed notes and run through RNN
-        # notes_embedded = tf.nn.embedding_lookup(self.E, notes)
-        # lstm1_output, _, _ = self.LSTM(notes_embedded)
+        notes_embedded = tf.nn.embedding_lookup(self.E, notes)
+        print(np.shape(notes_embedded))
+        print(np.shape(notes))
+        lstm1_output, _, _ = self.LSTM(notes_embedded)
         lstm1_output, _, _ = self.LSTM(notes)
         lstm1_output = self.Dropout(lstm1_output)
         lstm2_output, _, _ = self.LSTM2(lstm1_output)
