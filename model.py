@@ -46,8 +46,9 @@ class Model(tf.keras.Model):
         notes = tf.cast(notes, tf.int32)
 
         # embed notes and run through RNN
-        notes_embedded = tf.nn.embedding_lookup(self.E, notes)
-        lstm1_output, _, _ = self.LSTM(notes_embedded)
+        # notes_embedded = tf.nn.embedding_lookup(self.E, notes)
+        # lstm1_output, _, _ = self.LSTM(notes_embedded)
+        lstm1_output, _, _ = self.LSTM(notes)
         lstm1_output = self.Dropout(lstm1_output)
         lstm2_output, _, _ = self.LSTM2(lstm1_output)
 
@@ -228,7 +229,7 @@ def main():
     if sys.argv[1] == "--load":
         epoch_num = 1
     elif sys.argv[1] == "--train":
-        epoch_num = 50
+        epoch_num = 10
 
     # turn notes tensor into windows
     train_inputs_indices = notes[:,:-1]
