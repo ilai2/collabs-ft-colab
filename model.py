@@ -121,10 +121,11 @@ def generate_score(length, vocab, model, sample_n=5):
 
     reverse_vocab = {idx: word for word, idx in vocab.items()}
 
+    # initialize next input, which will be passed into the model
     next_input = np.empty((model.num_instruments, 1))
     score_val = []
 
-    # generate start for each instrument
+    # randomly generate start for each instrument
     for i in range(model.num_instruments):
         first_note_index = np.random.randint(0, len(vocab) - 1)
         next_input[i] = [first_note_index]
@@ -134,7 +135,7 @@ def generate_score(length, vocab, model, sample_n=5):
 
     score = [score_val]
 
-    # call model on is_generating to get most likely next note for each instrument
+    # call model with is_generating to get most likely next note for each instrument
     for _ in range(length):
         logits = model.call(next_input, is_generating=True)
         logits = np.array(logits[:,0,:])
@@ -143,12 +144,19 @@ def generate_score(length, vocab, model, sample_n=5):
         next_input = np.empty((model.num_instruments, 1))
 
         for i in range(len(logits)):
+            # take the n most "likely" indices
             top_n = np.argsort(logits[i])[-sample_n:]
-            n_logits = np.exp(logits[i][top_n])/np.exp(logits[i][top_n]).sum()
+            # use softmax to generate probability distribution
+            n_logits = np.sum(np.exp(logits[i][top_n])/np.exp(logits[i][top_n]))
+            # sample from likeliest indices
             out_index = np.random.choice(top_n,p=n_logits)
+            # translate index to note
             note = reverse_vocab[out_index]
+            # insert note with correct instrument
             note = (i, note[1], note[2], note[3])
+            # add to list representing a single note (length will be num_instruments)
             one_note.append(note)
+            # create next input to the model
             next_input[i] = [out_index]
 
         # add new note to score
